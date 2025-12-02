@@ -1,0 +1,5 @@
+pyinstaller
+python-vlc
+sphinx
+sphinx-rtd-theme
+
