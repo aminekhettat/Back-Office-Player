@@ -1,5 +1,7 @@
+#Install instruction: pip install -r requirements.txt
+
 pyinstaller
 python-vlc
 sphinx
 sphinx-rtd-theme
-
+PySide6

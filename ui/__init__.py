@@ -1,18 +1,17 @@
 """
-UI package.
+Qt UI package.
 
-This package contains the Tkinter-based graphical user interface
-components of the application.
+This package contains the Qt-based graphical user interface components
+of the Back-Office Player application.
 
 Goals
 -----
-- Offer a fully keyboard-usable interface.
-- Use explicit labels that work well with screen readers.
-- Coordinate usage of core and infra layers (:mod:`core`, :mod:`infra`).
+- Provide an accessible interface using Qt (better screen reader support).
+- Keep the UI layer separated from the core and infra layers.
 
 :author: Amine Khettat
 :organization: BLIND SYSTEMS
-:c   opyright: (c) 2025 BLIND SYSTEMS
+:copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2025-12-02
 :version: 0.1.0

@@ -1,11 +1,12 @@
-# Back-Office Player – Audio Practice Tool
+# Back-Office Player (BOP) – Audio Practice Tool
 
-Back-Office Player is a Windows desktop application written in Python that helps music students practice at home using rehearsal recordings.
+Back-Office Player (BOP) is a Windows desktop application written in Python that helps music students practice at home using rehearsal recordings.
 
 The application focuses on:
 - Simple, robust audio playback.
 - A–B looping (repeat a selected part of the track).
-- A keyboard- and screen-reader-friendly user interface.
+- A keyboard- and screen-reader-friendly user interface (Qt / PySide6).
+- A clear, minimal design with a dedicated application icon.
 
 The project is developed by **BLIND SYSTEMS** for the students of the **Culture Musique** association.
 
@@ -13,7 +14,7 @@ The project is developed by **BLIND SYSTEMS** for the students of the **Culture 
 
 ## Main Features
 
-- Play common audio formats: `mp3`, `wav`, `wma`, `flac`, `ogg` (depending on VLC support).
+- Play common audio formats supported by VLC: `mp3`, `wav`, `wma`, `flac`, `ogg`, etc.
 - Basic transport controls: **Play**, **Pause**, **Stop**.
 - Volume control (0–100) with persistent default volume.
 - Time position slider and time display `mm:ss / mm:ss`.
@@ -21,25 +22,31 @@ The project is developed by **BLIND SYSTEMS** for the students of the **Culture 
   - Set **Point A** and **Point B** on the timeline.
   - Loop continuously between A and B.
   - Clear A/B and disable looping at any time.
-- Keyboard shortcuts to keep the app usable without a mouse.
+- Keyboard navigation:
+  - Full control of the UI with Tab / Shift+Tab.
+  - Position slider controllable with **left/right arrow keys** when focused.
+- Keyboard shortcuts for frequent actions.
 - Settings stored in a simple JSON file (`settings.json`).
-- Modular architecture, ready for new features (named segments, bookmarks, etc.).
-- Code documented with Sphinx-friendly docstrings and comments.
+- Modular architecture (core / infra / UI) ready for extensions.
+- Custom application icon (`BOP.ico`).
 
 ---
 
 ## Accessibility
 
-The UI is designed to be usable with a screen reader and keyboard:
+The UI is built with **Qt (PySide6)** for better compatibility with screen readers (NVDA, JAWS, etc.) on Windows:
 
 - All buttons and controls have clear text labels.
-- The main actions are accessible via keyboard shortcuts.
+- Accessible names and descriptions are set where helpful.
+- Standard keyboard behavior is preserved:
+  - When a button has focus, **Space** or **Enter** activate it.
+  - When the position slider has focus, **left/right arrows** move the cursor and update playback position.
 - No drag-and-drop or complex mouse gestures are required for core usage.
 - Status messages (e.g. file loaded, A/B points set) are exposed via a status label that screen readers can announce.
 
-Future improvements may include:
-- More shortcuts for A/B management and segment navigation.
-- Better focus management and announcements for critical events.
+Future accessibility improvements may include:
+- More shortcuts for segment navigation.
+- Additional status announcements for critical events.
 
 ---
 
@@ -56,11 +63,13 @@ The project is organized into three main layers:
   - `persistence.py`: saves/loads segments associated with an audio file (JSON).
   - `settings.py`: saves/loads simple application settings (last folder, volume).
 
-- `ui/` – Tkinter user interface:
-  - `main_window.py`: main window, widgets, callbacks, keyboard shortcuts.
+- `ui/` – Qt user interface:
+  - `main_window.py`: main window, widgets, callbacks, keyboard shortcuts, and A–B loop logic.
 
 - Root:
-  - `app.py`: entry point that wires everything together and starts Tkinter.
+  - `app.py`: entry point that wires everything together and starts the Qt event loop.
+  - `resources/BOPIcon.png`: source PNG icon (for design and conversions).
+  - `resources/BOP.ico`: Windows icon used by the application.
 
 This separation makes it easier to maintain and test the non-UI logic and to evolve the UI independently.
 
@@ -68,11 +77,12 @@ This separation makes it easier to maintain and test the non-UI logic and to evo
 
 ## Requirements
 
+- **Windows**
 - **Python** 3.10+ (recommended)
-- **VLC** media player installed on the system
+- **VLC media player** installed on the system
 - Python packages (installed via `pip`):
+  - `PySide6`
   - `python-vlc`
-  - `tkinter` (usually comes with standard Python on Windows)
   - (Optional for documentation) `sphinx` and related extensions
 
 A `requirements.txt` file is provided for installing Python dependencies.
