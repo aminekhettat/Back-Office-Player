@@ -8,6 +8,8 @@ The application focuses on:
 - A keyboard- and screen-reader-friendly user interface (Qt / PySide6).
 - A clear, minimal design with a dedicated application icon.
 
+**Current version:** 1.0.0  
+
 The project is developed by **BLIND SYSTEMS** for the students of the **Culture Musique** association.
 
 ---
@@ -37,12 +39,12 @@ The project is developed by **BLIND SYSTEMS** for the students of the **Culture 
 The UI is built with **Qt (PySide6)** for better compatibility with screen readers (NVDA, JAWS, etc.) on Windows:
 
 - All buttons and controls have clear text labels.
-- Accessible names and descriptions are set where helpful.
+- Accessible names and descriptions are set where useful.
 - Standard keyboard behavior is preserved:
   - When a button has focus, **Space** or **Enter** activate it.
   - When the position slider has focus, **left/right arrows** move the cursor and update playback position.
 - No drag-and-drop or complex mouse gestures are required for core usage.
-- Status messages (e.g. file loaded, A/B points set) are exposed via a status label that screen readers can announce.
+- Status messages (file loaded, A/B points set, etc.) are exposed via a status label that screen readers can announce.
 
 Future accessibility improvements may include:
 - More shortcuts for segment navigation.
@@ -94,5 +96,5 @@ A `requirements.txt` file is provided for installing Python dependencies.
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/YOUR-USER/back-office-player.git
+   git clone https://github.com/aminekhettat/Back-Office-Player/tree/v1.0
    cd back-office-player
