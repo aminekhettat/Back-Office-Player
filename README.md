@@ -29,7 +29,7 @@ The project is developed by **BLIND SYSTEMS** for the students of the **Culture 
   - Position slider controllable with **left/right arrow keys** when focused.
 - Keyboard shortcuts for frequent actions.
 - Settings stored in a simple JSON file (`settings.json`).
-- Modular architecture (core / infra / UI) ready for extensions.
+- Modular architecture (`core` / `infra` / `ui`) ready for extensions.
 - Custom application icon (`BOP.ico`).
 
 ---
@@ -96,15 +96,15 @@ A `requirements.txt` file is provided for installing Python dependencies.
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/aminekhettat/back-office-player.git
-   cd back-office-player
-````
+   git clone https://github.com/aminekhettat/Back-Office-Player.git
+   cd Back-Office-Player
+   ```
 
 2. **Create and activate a virtual environment (Windows)**
 
    ```bash
    python -m venv bopenv
-   bopenv\Scripts\activate
+   bopenv\Scriptsctivate
    ```
 
 3. **Install Python dependencies**
@@ -115,8 +115,8 @@ A `requirements.txt` file is provided for installing Python dependencies.
 
 4. **Install VLC**
 
-   * Install VLC media player from the official website.
-   * Ensure VLC is correctly installed so that `python-vlc` can find its libraries.
+   - Install VLC media player from the official website.
+   - Ensure VLC is correctly installed so that `python-vlc` can find its libraries.
 
 ---
 
@@ -124,18 +124,18 @@ A `requirements.txt` file is provided for installing Python dependencies.
 
 The application uses a custom icon provided in the `resources` folder:
 
-* `resources/BOPIcon.png` – base PNG icon (for editing or future conversions).
-* `resources/BOP.ico` – icon used by the application and later by installers / .exe packaging.
+- `resources/BOPIcon.png` – base PNG icon (for editing or future conversions).
+- `resources/BOP.ico` – icon used by the application and later by installers / .exe packaging.
 
 The icon is applied at two levels:
 
-* Application icon (taskbar, Alt+Tab) set in `app.py`:
+- Application icon (taskbar, Alt+Tab) set in `app.py`:
 
   ```python
   app.setWindowIcon(QIcon("resources/BOP.ico"))
   ```
 
-* Window icon set in `ui/main_window.py`:
+- Window icon set in `ui/main_window.py`:
 
   ```python
   self.setWindowIcon(QIcon("resources/BOP.ico"))
@@ -188,37 +188,36 @@ Note: Users must have **VLC installed** on their machine for audio playback to w
 
 1. **Open an audio file**
 
-   * Click **“Open audio file…”**, or
-   * Use the keyboard shortcut **Ctrl+O**.
-   * Choose a supported audio file (`.mp3`, `.wav`, etc.).
+   - Click **“Open audio file…”**, or
+   - Use the keyboard shortcut **Ctrl+O**.
+   - Choose a supported audio file (`.mp3`, `.wav`, etc.).
 
 2. **Play / Pause / Stop**
 
-   * Use the buttons **Play**, **Pause**, **Stop**, or
-   * Use keyboard shortcuts:
-
-     * **Ctrl+P**: Play
-     * **Ctrl+Shift+P**: Pause
-     * **Ctrl+S**: Stop
+   - Use the buttons **Play**, **Pause**, **Stop**, or
+   - Use keyboard shortcuts:
+     - **Ctrl+P**: Play
+     - **Ctrl+Shift+P**: Pause
+     - **Ctrl+S**: Stop
 
 3. **Seek in the track**
 
-   * Move focus to the position slider via Tab.
-   * Use **left/right arrow keys** to move the cursor (1 second per step).
-   * The label next to it shows current and total time in `mm:ss / mm:ss`.
+   - Move focus to the position slider via Tab.
+   - Use **left/right arrow keys** to move the cursor (1 second per step).
+   - The label next to it shows current and total time in `mm:ss / mm:ss`.
 
 4. **Volume**
 
-   * Adjust **Volume** with the slider (0–100).
-   * Volume is saved in `settings.json` and restored on next run.
+   - Adjust **Volume** with the slider (0–100).
+   - Volume is saved in `settings.json` and restored on next run.
 
 5. **A–B Loop**
 
-   * Start playback.
-   * At the desired start time, click **Set A** or use **Ctrl+Shift+A**.
-   * Let the track continue, then at the desired end time, click **Set B** or use **Ctrl+Shift+B**.
-   * Check **Loop A–B** to enable the loop.
-   * Use **Clear A/B** to remove both points and disable looping.
+   - Start playback.
+   - At the desired start time, click **Set A** or use **Ctrl+Shift+A**.
+   - Let the track continue, then at the desired end time, click **Set B** or use **Ctrl+Shift+B**.
+   - Check **Loop A–B** to enable the loop.
+   - Use **Clear A/B** to remove both points and disable looping.
 
 ---
 
@@ -226,27 +225,26 @@ Note: Users must have **VLC installed** on their machine for audio playback to w
 
 Global shortcuts:
 
-* **Ctrl+O** – Open audio file
-* **Ctrl+P** – Play
-* **Ctrl+Shift+P** – Pause
-* **Ctrl+S** – Stop
-* **Ctrl+Shift+A** – Set point A at current playback position
-* **Ctrl+Shift+B** – Set point B at current playback position
+- **Ctrl+O** – Open audio file
+- **Ctrl+P** – Play
+- **Ctrl+Shift+P** – Pause
+- **Ctrl+S** – Stop
+- **Ctrl+Shift+A** – Set point A at current playback position
+- **Ctrl+Shift+B** – Set point B at current playback position
 
 Standard widget behavior:
 
-* With focus on a **button**: **Space** or **Enter** activate it.
-* With focus on the **position slider**:
-
-  * **Left arrow**: move backward by 1 second and update playback position.
-  * **Right arrow**: move forward by 1 second and update playback position.
+- With focus on a **button**: **Space** or **Enter** activate it.
+- With focus on the **position slider**:
+  - **Left arrow**: move backward by 1 second and update playback position.
+  - **Right arrow**: move forward by 1 second and update playback position.
 
 ---
 
 ## Project Structure
 
 ```text
-back-office-player/
+Back-Office-Player/
 ├─ app.py                  # Application entry point (Qt)
 ├─ requirements.txt        # Python dependencies
 ├─ settings.json           # Generated at runtime (user settings)
@@ -285,7 +283,7 @@ The code is written with Sphinx-style docstrings (module metadata, parameters, r
 Typical steps from the project root:
 
 ```bash
-bopenv\Scripts\activate
+bopenv\Scriptsctivate
 cd docs
 .\make.bat html
 ```
@@ -293,14 +291,14 @@ cd docs
 The generated HTML documentation is available under:
 
 ```text
-docs\_build\html\index.html
+docs/_build/html/index.html
 ```
 
 When you run `sphinx-quickstart` originally, you can set:
 
-* Project name: `Back-Office Player`
-* Author: `Amine Khettat`
-* Project release: `1.0.0`
+- Project name: `Back-Office Player`
+- Author: `Amine Khettat`
+- Project release: `1.0.0`
 
 ---
 
@@ -308,41 +306,40 @@ When you run `sphinx-quickstart` originally, you can set:
 
 Planned or possible enhancements include:
 
-* **Named segments**
+- **Named segments**  
   Label important parts of a piece (e.g. “Intro”, “Verse 1”, “Chorus”) and store them per audio file using `Segment` and `SegmentManager`.
 
-* **Segment list and navigation**
+- **Segment list and navigation**  
   A list of segments in the UI for quick navigation and playback.
 
-* **Tempo change (time-stretching)**
+- **Tempo change (time-stretching)**  
   Change playback speed (slower or faster) without modifying pitch, to help students practice difficult passages.
 
-* **Pitch / key change (transposition)**
+- **Pitch / key change (transposition)**  
   Change the pitch of the audio (up/down by semitones) without changing speed, so students can adapt the recording to their vocal range or instrument tuning.
 
-* **Export segment as separate audio file**
+- **Export segment as separate audio file**  
   Save a selected A–B segment as a standalone audio file.
 
-* **Import/export practice configurations**
+- **Import/export practice configurations**  
   Save and share sets of segments, loop settings and other practice parameters.
 
-* **More keyboard shortcuts**
+- **More keyboard shortcuts**  
   Additional shortcuts for segment navigation and advanced playback controls.
 
 ---
 
 ## Release History
 
-* **v1.0.0**
+- **v1.0.0**  
   First stable release of Back-Office Player (BOP):
+  - Accessible Qt-based UI (keyboard + screen reader friendly)
+  - A–B loop practice
+  - Position navigation with arrow keys
+  - Sphinx documentation
+  - PyInstaller Windows executable
 
-  * Accessible Qt-based UI (keyboard + screen reader friendly)
-  * A–B loop practice
-  * Position navigation with arrow keys
-  * Sphinx documentation
-  * PyInstaller Windows executable
-
-* **v0.2.0**
+- **v0.2.0**  
   Internal development version (not publicly distributed).
 
 ---
@@ -351,9 +348,9 @@ Planned or possible enhancements include:
 
 Contributions are welcome as long as they respect:
 
-* The project’s accessibility goals (keyboard / screen-reader first).
-* The modular architecture (separating core, infra, and UI).
-* The existing coding style and documentation format.
+- The project’s accessibility goals (keyboard / screen-reader first).
+- The modular architecture (separating core, infra, and UI).
+- The existing coding style and documentation format.
 
 Before submitting a pull request:
 
