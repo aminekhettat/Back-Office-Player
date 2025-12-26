@@ -10,7 +10,9 @@ The application focuses on:
 
 **Current version:** 1.0.0  
 
-The project is developed by **BLIND SYSTEMS** for the students of the **Culture Musique** association.
+The project is developed by **[BLIND SYSTEMS](https://www.blindsystems.org)**
+for the students of the **[Culture Musique](https://www.sabamusic.fr)**
+association.
 
 ---
 
