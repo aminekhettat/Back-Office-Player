@@ -63,6 +63,9 @@ class AudioPlayer:
         # Path to the current audio file (for information only).
         self.current_file_path: Optional[Path] = None
 
+        # Track if we have already tried to force-calculate duration.
+        self._duration_calculated: bool = False
+
     # ------------------------------------------------------------------ #
     # File management
     # ------------------------------------------------------------------ #
@@ -97,6 +100,9 @@ class AudioPlayer:
 
         # Attach the media to the player.
         self._player.set_media(self._media)
+
+        # Reset the duration calculation flag for this new file.
+        self._duration_calculated = False
 
     # ------------------------------------------------------------------ #
     # Playback controls
@@ -214,8 +220,9 @@ class AudioPlayer:
         # Duration in milliseconds.
         length_ms = self._player.get_length()
 
-        # If duration is unknown, trigger a quick play/stop.
-        if length_ms <= 0:
+        # If duration is unknown and we haven't tried to force-calculate it yet.
+        if length_ms <= 0 and not self._duration_calculated:
+            self._duration_calculated = True
             self._player.play()
             self._player.stop()
             length_ms = self._player.get_length()

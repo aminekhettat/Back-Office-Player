@@ -19,7 +19,7 @@ import sys
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 
-from core.audio_player import AudioPlayer
+from core.audio_player_native import AudioPlayer
 from core.segment_manager import SegmentManager
 from ui.main_window import MainWindowQt
 

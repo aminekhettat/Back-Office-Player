@@ -38,12 +38,14 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QMessageBox,
     QCheckBox,
+    QInputDialog,
 )
 
-from core.audio_player import AudioPlayer
+from core.audio_player_native import AudioPlayer
 from core.segment_manager import SegmentManager
+from ui.segment_list_widget import SegmentListWidget
 from infra.settings import load_settings, save_settings
-from infra.persistence import load_segments
+from infra.persistence import load_segments, save_segments
 
 
 class MainWindowQt(QMainWindow):
@@ -79,6 +81,7 @@ class MainWindowQt(QMainWindow):
         self.point_a: Optional[float] = None
         self.point_b: Optional[float] = None
         self.loop_enabled: bool = False
+        self.already_looped: bool = False  # Flag to avoid redundant play() calls
 
         # Build the user interface and timers.
         self._build_ui()
@@ -215,6 +218,69 @@ class MainWindowQt(QMainWindow):
         loop_layout.addWidget(self.btn_clear_ab)
         loop_layout.addWidget(self.chk_loop)
 
+        # ---------------- Row 4b: Tempo control (NEW - Phase 1) -------- #
+        tempo_layout = QHBoxLayout()
+
+        lbl_tempo = QLabel("Tempo:")
+        lbl_tempo.setAccessibleName("Tempo label")
+
+        self.slider_tempo = QSlider(Qt.Horizontal)
+        self.slider_tempo.setRange(50, 200)  # 50% to 200%
+        self.slider_tempo.setValue(100)  # 100% = normal speed
+        self.slider_tempo.setAccessibleName("Tempo slider")
+        self.slider_tempo.setSingleStep(5)
+        self.slider_tempo.valueChanged.connect(self.on_tempo_change)
+
+        self.lbl_tempo_value = QLabel("100%")
+        self.lbl_tempo_value.setAccessibleName("Tempo value display")
+        self.lbl_tempo_value.setMaximumWidth(50)
+
+        tempo_layout.addWidget(lbl_tempo)
+        tempo_layout.addWidget(self.slider_tempo)
+        tempo_layout.addWidget(self.lbl_tempo_value)
+
+        # ---------------- Row 5: Segment list (NEW - Phase 1) --------- #
+        self.segment_list_widget = SegmentListWidget(self.segment_manager)
+        self.segment_list_widget.selected_callback = self.on_segment_selected
+        self.segment_list_widget.changed_callback = self._on_segments_changed
+        self.segment_list_widget.setMaximumHeight(150)
+
+        # Buttons in segment section
+        segment_buttons_layout = QHBoxLayout()
+
+        self.btn_save_segment = QPushButton("Save Segment")
+        self.btn_save_segment.setAccessibleName("Save current A-B as segment")
+        self.btn_save_segment.setAccessibleDescription(
+            "Save the current A-B loop as a named segment. "
+            "Points A and B must be set and B must be after A."
+        )
+        self.btn_save_segment.clicked.connect(self.on_save_segment)
+
+        self.btn_export_config = QPushButton("Export Config")
+        self.btn_export_config.setAccessibleName("Export segments and settings")
+        self.btn_export_config.setAccessibleDescription(
+            "Export all segments and current settings to a .bop file "
+            "that can be shared or imported later."
+        )
+        self.btn_export_config.clicked.connect(self.on_export_config)
+
+        self.btn_import_config = QPushButton("Import Config")
+        self.btn_import_config.setAccessibleName("Import segments and settings")
+        self.btn_import_config.setAccessibleDescription(
+            "Import segments and settings from a previously exported .bop file."
+        )
+        self.btn_import_config.clicked.connect(self.on_import_config)
+
+        segment_buttons_layout.addWidget(self.btn_save_segment)
+        segment_buttons_layout.addWidget(self.btn_export_config)
+        segment_buttons_layout.addWidget(self.btn_import_config)
+
+        # Segment section container
+        segment_section = QWidget()
+        segment_section_layout = QVBoxLayout(segment_section)
+        segment_section_layout.addWidget(self.segment_list_widget)
+        segment_section_layout.addLayout(segment_buttons_layout)
+
         # ---------------- Row 4: status label --------------------------- #
         self.lbl_status = QLabel("No file loaded.")
         self.lbl_status.setAccessibleName("Status message")
@@ -224,6 +290,8 @@ class MainWindowQt(QMainWindow):
         main_layout.addLayout(controls_layout)
         main_layout.addLayout(position_layout)
         main_layout.addLayout(loop_layout)
+        main_layout.addLayout(tempo_layout)
+        main_layout.addWidget(segment_section)
         main_layout.addWidget(self.lbl_status)
 
         self.setCentralWidget(central)
@@ -243,11 +311,16 @@ class MainWindowQt(QMainWindow):
         - Ctrl+S: stop playback.
         - Ctrl+Shift+A: set point A at the current position.
         - Ctrl+Shift+B: set point B at the current position.
+        - Ctrl+Shift+S: save current A-B as a named segment.
+        - Ctrl+E: export configuration (.bop file).
+        - Ctrl+I: import configuration (.bop file).
 
         Notes
         -----
         There is intentionally no global shortcut on the space bar, so that
         Space/Enter keep activating the focused button (standard behavior).
+        Position slider: Left/Right arrows seek ±1 second.
+        Tempo slider: Up/Down arrows adjust tempo by 5%.
         """
         # Ctrl+O -> Open audio file.
         shortcut_open = QShortcut(QKeySequence("Ctrl+O"), self)
@@ -272,6 +345,18 @@ class MainWindowQt(QMainWindow):
         # Ctrl+Shift+B -> Set point B.
         shortcut_set_b = QShortcut(QKeySequence("Ctrl+Shift+B"), self)
         shortcut_set_b.activated.connect(self.on_set_point_b)
+
+        # Ctrl+Shift+S -> Save segment.
+        shortcut_save_segment = QShortcut(QKeySequence("Ctrl+Shift+S"), self)
+        shortcut_save_segment.activated.connect(self.on_save_segment)
+
+        # Ctrl+E -> Export config.
+        shortcut_export = QShortcut(QKeySequence("Ctrl+E"), self)
+        shortcut_export.activated.connect(self.on_export_config)
+
+        # Ctrl+I -> Import config.
+        shortcut_import = QShortcut(QKeySequence("Ctrl+I"), self)
+        shortcut_import.activated.connect(self.on_import_config)
 
     # ------------------------------------------------------------------ #
     # Timer to update position and A–B loop logic
@@ -323,11 +408,15 @@ class MainWindowQt(QMainWindow):
         self.lbl_file.setText(path.name)
         self.lbl_status.setText(f"Loaded file: {path.name}")
 
+        # Reset the position slider range to 0 when a new file is loaded.
+        self.slider_position.setRange(0, 0)
+
         # Reset A/B points when a new file is loaded.
         self.on_clear_points(update_status=False)
 
         # Load segments associated with this file (for future features).
         self.segment_manager = load_segments(path)
+        self.segment_list_widget.set_segment_manager(self.segment_manager)
 
         # Remember this folder for future opens.
         self.settings["last_opened_folder"] = str(path.parent)
@@ -420,6 +509,7 @@ class MainWindowQt(QMainWindow):
         self.point_a = None
         self.point_b = None
         self.loop_enabled = False
+        self.already_looped = False
         self.chk_loop.setChecked(False)
 
         if update_status:
@@ -435,6 +525,151 @@ class MainWindowQt(QMainWindow):
             Qt check state (0 unchecked, 2 checked).
         """
         self.loop_enabled = state != 0
+
+    # --------- NEW CALLBACKS (Phase 1) --------- #
+    def on_tempo_change(self, value: int) -> None:
+        """
+        Callback when the tempo slider is moved.
+
+        Parameters
+        ----------
+        value : int
+            Slider value (50-200, representing percentage).
+        """
+        percentage = value / 100.0
+        self.audio_player.set_tempo(percentage)
+
+        # Update display label
+        self.lbl_tempo_value.setText(f"{value}%")
+
+    def on_segment_selected(self, segment) -> None:
+        """
+        Callback when a segment is selected from the list.
+
+        Jumps to the segment's start position.
+
+        Parameters
+        ----------
+        segment : Segment
+            The selected segment.
+        """
+        if segment:
+            self.audio_player.set_position(segment.start_sec)
+            self.lbl_status.setText(
+                f"Jumped to segment '{segment.name}' at {self._format_time(segment.start_sec)}."
+            )
+
+    def on_save_segment(self) -> None:
+        """
+        Save the current A-B loop as a named segment.
+        """
+        if self.point_a is None or self.point_b is None or self.point_b <= self.point_a:
+            QMessageBox.warning(
+                self,
+                "Invalid A-B",
+                "Please set valid A and B points (B must be after A).",
+            )
+            return
+
+        # Ask user for segment name
+        name, ok = QInputDialog.getText(
+            self,
+            "Save Segment",
+            "Enter segment name:",
+            text=f"Segment {len(self.segment_manager.list_segments()) + 1}",
+        )
+
+        if ok and name:
+            from core.segment import Segment
+            segment = Segment(name=name, start_sec=self.point_a, end_sec=self.point_b)
+            self.segment_list_widget.add_segment(segment)
+            save_segments(self.current_audio_path, self.segment_manager)
+            self.lbl_status.setText(
+                f"Segment '{name}' saved ({self._format_time(self.point_a)} - {self._format_time(self.point_b)})."
+            )
+
+    def _on_segments_changed(self) -> None:
+        """Persist segments to disk whenever the list is modified."""
+        save_segments(self.current_audio_path, self.segment_manager)
+
+    def on_export_config(self) -> None:
+        """
+        Export segments and practice settings to a .bop file.
+        """
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Practice Configuration",
+            "",
+            "BOP Files (*.bop);;All Files (*.*)",
+        )
+
+        if not filename:
+            return
+
+        try:
+            # Prepare export data
+            export_data = {
+                "audio_file": str(self.current_audio_path) if self.current_audio_path else None,
+                "segments": self.segment_manager.to_dict()["segments"],
+                "settings": {
+                    "volume": self.audio_player.get_volume(),
+                    "tempo": self.audio_player.get_tempo(),
+                },
+            }
+
+            import json
+            with open(filename, "w", encoding="utf-8") as f:
+                json.dump(export_data, f, ensure_ascii=False, indent=2)
+
+            QMessageBox.information(
+                self, "Exported", f"Configuration saved to {filename}"
+            )
+            self.lbl_status.setText(f"Configuration exported to {filename}.")
+        except Exception as exc:
+            QMessageBox.critical(self, "Error", f"Could not export configuration: {exc}")
+
+    def on_import_config(self) -> None:
+        """
+        Import segments and practice settings from a .bop file.
+        """
+        filename, _ = QFileDialog.getOpenFileName(
+            self,
+            "Import Practice Configuration",
+            "",
+            "BOP Files (*.bop);;All Files (*.*)",
+        )
+
+        if not filename:
+            return
+
+        try:
+            import json
+            with open(filename, "r", encoding="utf-8") as f:
+                import_data = json.load(f)
+
+            # Import segments
+            from core.segment_manager import SegmentManager
+            self.segment_manager = SegmentManager.from_dict(
+                {"segments": import_data.get("segments", [])}
+            )
+            self.segment_list_widget.set_segment_manager(self.segment_manager)
+
+            # Apply settings
+            settings = import_data.get("settings", {})
+            if "volume" in settings:
+                self.slider_volume.setValue(int(settings["volume"]))
+            if "tempo" in settings:
+                tempo_percent = int(settings["tempo"] * 100)
+                self.slider_tempo.setValue(tempo_percent)
+
+            QMessageBox.information(
+                self, "Imported", f"Configuration loaded from {filename}"
+            )
+            self.lbl_status.setText(
+                f"Configuration imported ({len(self.segment_manager.list_segments())} segments)."
+            )
+        except Exception as exc:
+            QMessageBox.critical(self, "Error", f"Could not import configuration: {exc}")
 
     # ------------------------------------------------------------------ #
     # Position update and A–B loop logic
@@ -471,10 +706,14 @@ class MainWindowQt(QMainWindow):
             and self.point_b is not None
             and self.point_b > self.point_a
         ):
-            if current_pos > self.point_b:
-                # Jump back to point A and continue playback.
+            if current_pos > self.point_b and not self.already_looped:
+                # Jump back to point A and continue playback (only once per loop cycle).
+                self.already_looped = True
                 self.audio_player.set_position(self.point_a)
                 self.audio_player.play()
+            elif current_pos <= self.point_b:
+                # Reset the flag once we're back in the loop range.
+                self.already_looped = False
 
     # ------------------------------------------------------------------ #
     # Helpers

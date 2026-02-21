@@ -105,6 +105,8 @@ def save_segments(audio_file_path: Optional[Path], manager: SegmentManager) -> N
         return
 
     try:
+        # Ensure the parent directory exists.
+        meta_path.parent.mkdir(parents=True, exist_ok=True)
         with meta_path.open("w", encoding="utf-8") as f:
             json.dump(manager.to_dict(), f, ensure_ascii=False, indent=2)
     except Exception as exc:
