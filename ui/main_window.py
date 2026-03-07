@@ -14,7 +14,7 @@ Responsibilities
 
 :author: Amine Khettat
 :organization: BLIND SYSTEMS
-:c   opyright: (c) 2025 BLIND SYSTEMS
+:copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2025-12-02
 :version: 0.4.0
@@ -54,6 +54,41 @@ class MainWindowQt(QMainWindow):
 
     The goal is to provide an accessible UI (screen reader + keyboard)
     while reusing the existing core and infra modules.
+
+    Attributes
+    ----------
+    audio_player : core.audio_player_native.AudioPlayer
+        Native audio player instance (librosa + sounddevice).
+    segment_manager : SegmentManager
+        Segment manager for the currently loaded audio file.
+    settings : dict
+        Persisted user settings (last folder, default volume).
+    current_audio_path : Path or None
+        Path to the currently loaded audio file, or ``None``.
+    point_a : float or None
+        Start position of the A–B loop in seconds, or ``None`` if not set.
+    point_b : float or None
+        End position of the A–B loop in seconds, or ``None`` if not set.
+    loop_enabled : bool
+        Whether A–B looping is currently active.
+    already_looped : bool
+        Internal flag to avoid triggering multiple loop jumps per cycle.
+    timer : QTimer
+        100 ms periodic timer driving position updates and loop logic.
+    slider_position : QSlider
+        Horizontal slider showing and controlling the playback position.
+    slider_volume : QSlider
+        Horizontal slider controlling the audio volume (0–100).
+    slider_tempo : QSlider
+        Horizontal slider controlling the playback tempo (50–200 %).
+    lbl_time : QLabel
+        Label displaying current and total time as ``mm:ss / mm:ss``.
+    lbl_tempo_value : QLabel
+        Label showing the current tempo percentage.
+    lbl_status : QLabel
+        Status bar label announcing state changes to screen readers.
+    segment_list_widget : SegmentListWidget
+        Widget listing named segments for the current audio file.
     """
 
     def __init__(self, audio_player: AudioPlayer, segment_manager: SegmentManager) -> None:

@@ -11,3 +11,10 @@ application.
    core
    infra
    ui
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Dedicated module pages
+
+   audio_player_native
+   segment_list_widget

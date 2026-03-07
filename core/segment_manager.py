@@ -12,8 +12,7 @@ Features
 
 :author: Amine Khettat
 :organization: BLIND SYSTEMS
-:c
-opyright: (c) 2025 BLIND SYSTEMS
+:copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2025-12-02
 :version: 0.1.0
@@ -32,6 +31,11 @@ class SegmentManager:
 
     This class is independent from the user interface and can be used
     in any context where multiple named segments must be managed.
+
+    Attributes
+    ----------
+    _segments : list[Segment]
+        Internal ordered list of segments.
     """
 
     def __init__(self) -> None:

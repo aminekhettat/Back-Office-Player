@@ -27,15 +27,6 @@ Key Features (Phase 1)
 - **Auto-Refresh**: List updates automatically when segments are added/deleted
 - **Double-Click Support**: Double-click a segment to jump to it
 
-SegmentListWidget Class
------------------------
-
-.. autoclass:: ui.segment_list_widget.SegmentListWidget
-   :members:
-   :private-members:
-   :special-members: __init__
-   :show-inheritance:
-
 Example Usage
 ~~~~~~~~~~~~~
 

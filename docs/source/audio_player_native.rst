@@ -26,15 +26,6 @@ Key Features
 - **Thread-Safe**: All operations protected by locks for multi-threaded safety
 - **Efficient**: Uses numpy arrays for fast audio processing
 
-Audio Player Class
-------------------
-
-.. autoclass:: core.audio_player_native.AudioPlayer
-   :members:
-   :private-members:
-   :special-members: __init__
-   :show-inheritance:
-
 Example Usage
 ~~~~~~~~~~~~~
 

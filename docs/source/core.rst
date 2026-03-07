@@ -4,7 +4,7 @@ core package
 Submodules
 ----------
 
-core.audio\_player module (Legacy - VLC-based)
+core.audio\_player module (Legacy — VLC-based)
 -----------------------------------------------
 
 .. automodule:: core.audio_player
@@ -14,16 +14,13 @@ core.audio\_player module (Legacy - VLC-based)
 
 .. note::
 
-   This module is retained for backward compatibility. Use
-   :mod:`core.audio_player_native` in new code.
+   This module is retained for backward compatibility.
+   Use :mod:`core.audio_player_native` in new code.
 
-core.audio\_player\_native module (NEW - Phase 1)
---------------------------------------------------
+core.audio\_player\_native module
+----------------------------------
 
-.. automodule:: core.audio_player_native
-   :members:
-   :show-inheritance:
-   :undoc-members:
+See the dedicated page: :doc:`audio_player_native`.
 
 core.segment module
 -------------------
@@ -31,20 +28,12 @@ core.segment module
 .. automodule:: core.segment
    :members:
    :show-inheritance:
-   :undoc-members:
 
 core.segment\_manager module
-----------------------------
+-----------------------------
 
 .. automodule:: core.segment_manager
    :members:
    :show-inheritance:
    :undoc-members:
 
-Module contents
----------------
-
-.. automodule:: core
-   :members:
-   :show-inheritance:
-   :undoc-members:

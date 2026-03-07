@@ -35,9 +35,27 @@ class SegmentListWidget(QWidget):
     Widget displaying a list of segments with navigation controls.
 
     Allows users to:
-    - View all segments for the current audio file
-    - Select a segment and jump to it
-    - Add, edit, or delete segments
+
+    - View all segments for the current audio file.
+    - Select a segment and jump to it.
+    - Delete segments individually.
+
+    Attributes
+    ----------
+    segment_manager : SegmentManager
+        The segment manager whose segments are displayed.
+    selected_callback : callable or None
+        Called with the selected :class:`~core.segment.Segment` when the
+        user clicks or double-clicks a list item.
+    changed_callback : callable or None
+        Called (no arguments) whenever the segment list is modified
+        (add or delete). Typically used to persist changes to disk.
+    list_widget : QListWidget
+        The Qt list widget showing all segments.
+    btn_jump : QPushButton
+        Button that jumps playback to the selected segment's start.
+    btn_delete : QPushButton
+        Button that deletes the selected segment.
     """
 
     def __init__(self, segment_manager: SegmentManager, parent=None) -> None:

@@ -4,17 +4,21 @@ Native audio player module (without VLC dependency).
 This module provides a cross-platform audio player using librosa for loading
 and sounddevice for playback, with support for all audio formats via librosa.
 
-Features:
-- Support for MP3, WAV, FLAC, OGG, WMA via librosa
-- Sample-accurate position tracking and seeking
-- Volume control (applied per block, effective immediately)
-- Tempo control (tape-style: speed and pitch change together; true
-  pitch-preserving time-stretch is planned for a future release)
+Features
+--------
 
-Requirements:
-- librosa (loads audio, supports all formats)
-- sounddevice (playback via PortAudio)
-- numpy
+- Support for MP3, WAV, FLAC, OGG, WMA via librosa.
+- Sample-accurate position tracking and seeking.
+- Volume control (applied per block, effective immediately).
+- Tempo control (tape-style: speed and pitch change together;
+  true pitch-preserving time-stretch is planned for a future release).
+
+Requirements
+------------
+
+- librosa (loads audio, supports all formats).
+- sounddevice (playback via PortAudio).
+- numpy.
 
 :author: Amine Khettat
 :organization: BLIND SYSTEMS
