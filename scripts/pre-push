@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# =============================================================================
+# git pre-push hook — Back-Office Player
+#
+# Enforces BEFORE every push:
+#   1. flake8 passes on all source files (0 warnings, 0 errors)
+#   2. pytest passes with 100% coverage
+#
+# Install:  make hooks          (or copy manually to .git/hooks/pre-push)
+# Skip:     git push --no-verify   (use only in emergencies)
+# =============================================================================
+
+set -euo pipefail
+
+PYTHON="${PYTHON:-python}"
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+echo ""
+echo "════════════════════════════════════════════════════════"
+echo "  BOP pre-push hook — running quality checks"
+echo "════════════════════════════════════════════════════════"
+echo ""
+
+# ── 1. Lint ──────────────────────────────────────────────────────────────────
+echo "▶ Step 1/2 — flake8 lint check …"
+if ! "$PYTHON" -m flake8 core/ infra/ ui/ app.py __version__.py \
+        --max-line-length=100 \
+        --extend-ignore=E501,W503,E203; then
+    echo ""
+    echo "✗ flake8 FAILED — fix the issues above before pushing."
+    exit 1
+fi
+echo "✓ flake8 passed"
+echo ""
+
+# ── 2. Tests + Coverage ──────────────────────────────────────────────────────
+echo "▶ Step 2/2 — pytest with 100 % coverage requirement …"
+if ! QT_QPA_PLATFORM=offscreen "$PYTHON" -m pytest tests/ \
+        --cov=. \
+        --cov-config=.coveragerc \
+        --cov-report=term-missing \
+        --cov-fail-under=100 \
+        -q; then
+    echo ""
+    echo "✗ Tests FAILED or coverage < 100 % — fix before pushing."
+    exit 1
+fi
+echo "✓ All tests passed — coverage ≥ 100 %"
+echo ""
+
+echo "════════════════════════════════════════════════════════"
+echo "  ✓ All checks passed — push proceeding"
+echo "════════════════════════════════════════════════════════"
+echo ""

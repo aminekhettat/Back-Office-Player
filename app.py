@@ -9,7 +9,7 @@ Qt main window) and starts the Qt event loop.
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2025-12-02
-:version: 0.3.0
+:version: 1.1.0
 """
 
 from __future__ import annotations
@@ -19,8 +19,11 @@ import sys
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 
+from __version__ import __version__
 from core.audio_player_native import AudioPlayer
 from core.segment_manager import SegmentManager
+from infra.i18n import init_language
+from infra.settings import load_settings
 from ui.main_window import MainWindowQt
 
 
@@ -40,9 +43,18 @@ def main() -> None:
     # Create the Qt application object.
     app = QApplication(sys.argv)
 
+    # Identify the application for platform services (e.g. user-data dirs).
+    app.setApplicationName("BOP")
+    app.setApplicationVersion(__version__)
+    app.setOrganizationName("BLINDSYSTEMS")
+
     # Set the global application icon (taskbar, Alt+Tab, etc.).
     # The icon file is expected at: resources/BOP.ico
     app.setWindowIcon(QIcon("resources/BOP.ico"))
+
+    # Initialise language from user settings (falls back to OS locale).
+    settings = load_settings()
+    init_language(settings.get("language"))
 
     # Create the audio player (core logic).
     audio_player = AudioPlayer()

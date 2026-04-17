@@ -11,7 +11,7 @@ The application focuses on:
 - A keyboard- and screen-reader-friendly user interface (Qt / PySide6).
 - A clear, minimal design with a dedicated application icon.
 
-**Current version:** 0.3.0
+**Current version:** 1.1.0
 
 The project is developed by **[BLIND SYSTEMS](https://www.blindsystems.org)**
 for the students of the **[Culture Musique](https://www.sabamusic.fr)**

@@ -1,0 +1,30 @@
+[run]
+source = .
+omit =
+    bopenv/*
+    tests/*
+    docs/*
+    */site-packages/*
+    setup.py
+    conftest.py
+    core/audio_player.py
+
+[report]
+exclude_lines =
+    # Standard pragma
+    pragma: no cover
+    # Abstract methods
+    raise NotImplementedError
+    # __repr__ / __str__ boilerplate
+    def __repr__
+    def __str__
+    # Type-checking imports
+    if TYPE_CHECKING:
+    # Entry-point guard
+    if __name__ == .__main__.:
+    \.\.\.
+show_missing = True
+precision = 2
+
+[html]
+directory = docs/_build/coverage

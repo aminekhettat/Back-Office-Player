@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# =============================================================================
+# git pre-commit hook — Back-Office Player
+#
+# Auto-bumps the patch version on every commit that touches Python source
+# files. The bump is included in the commit itself (no extra commit created).
+#
+# Install:  make hooks   (copies this file to .git/hooks/pre-commit)
+# Skip:     git commit --no-verify   (use only in emergencies)
+# =============================================================================
+
+set -euo pipefail
+
+PYTHON="${PYTHON:-python}"
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+# ── Guard: skip during merge / rebase / cherry-pick ──────────────────────────
+GIT_DIR="$(git rev-parse --git-dir)"
+if [ -f "$GIT_DIR/MERGE_HEAD" ] || \
+   [ -f "$GIT_DIR/CHERRY_PICK_HEAD" ] || \
+   [ -f "$GIT_DIR/REBASE_HEAD" ]; then
+    echo "⏭  pre-commit: skipping version bump (merge/rebase/cherry-pick)"
+    exit 0
+fi
+
+# ── Guard: skip if no Python source files are staged ─────────────────────────
+# (e.g. docs-only or config-only commits don't need a version bump)
+STAGED_PY=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
+if [ -z "$STAGED_PY" ]; then
+    exit 0
+fi
+
+# ── Guard: skip if bump2version is not installed ─────────────────────────────
+if ! "$PYTHON" -m bumpversion --version >/dev/null 2>&1; then
+    echo "⚠  pre-commit: bump2version not found — skipping version bump."
+    echo "   Install with: pip install bump2version"
+    exit 0
+fi
+
+# ── Bump patch version (no commit, no tag — changes are staged below) ─────────
+echo ""
+echo "────────────────────────────────────────────────────────"
+echo "  BOP pre-commit hook — bumping patch version"
+echo "────────────────────────────────────────────────────────"
+
+OLD_VERSION=$("$PYTHON" -c "from __version__ import __version__; print(__version__)")
+
+if ! "$PYTHON" -m bumpversion patch --no-commit --no-tag 2>&1; then
+    echo "⚠  bump2version failed — committing without version bump."
+    exit 0
+fi
+
+NEW_VERSION=$("$PYTHON" -c "from __version__ import __version__; print(__version__)")
+echo "  $OLD_VERSION → $NEW_VERSION"
+
+# ── Stage all files modified by bump2version ──────────────────────────────────
+VERSIONED_FILES=(
+    __version__.py
+    README.md
+    app.py
+    core/__init__.py
+    core/audio_loader.py
+    core/audio_player_native.py
+    core/commands.py
+    core/pitch_engine.py
+    core/practice_session.py
+    core/segment.py
+    core/segment_manager.py
+    infra/__init__.py
+    infra/audio_export.py
+    infra/persistence.py
+    infra/practice_history.py
+    infra/settings.py
+    infra/i18n.py
+    infra/updater.py
+    ui/__init__.py
+    ui/history_dialog.py
+    ui/main_window.py
+    ui/practice_panel.py
+    ui/segment_list_widget.py
+    ui/settings_dialog.py
+    ui/waveform_widget.py
+    .bumpversion.cfg
+)
+
+for f in "${VERSIONED_FILES[@]}"; do
+    if [ -f "$ROOT/$f" ]; then
+        git add "$ROOT/$f"
+    fi
+done
+
+echo "  ✓ Version files staged"
+echo "────────────────────────────────────────────────────────"
+echo ""

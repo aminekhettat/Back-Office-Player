@@ -7,19 +7,20 @@ segment in an audio file.
 A segment is defined by:
 - a name (e.g. "Verse 1"),
 - a start time in seconds,
-- an end time in seconds.
+- an end time in seconds,
+- optional notes, color, category, and practice count.
 
 :author: Amine Khettat
 :organization: BLIND SYSTEMS
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2025-12-02
-:version: 0.1.0
+:version: 1.1.0
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Dict, Any
 
 
@@ -36,11 +37,23 @@ class Segment:
         Segment start time (seconds).
     end_sec : float
         Segment end time (seconds).
+    notes : str
+        Optional free-text notes for this segment.
+    color : str
+        CSS-style color string for display (e.g. "#FF0000").
+    category : str
+        Optional category label (e.g. "difficult", "verse", etc.).
+    practice_count : int
+        Number of times this segment has been practiced.
     """
 
     name: str
     start_sec: float
     end_sec: float
+    notes: str = field(default="")
+    color: str = field(default="")
+    category: str = field(default="")
+    practice_count: int = field(default=0)
 
     def duration(self) -> float:
         """
@@ -73,7 +86,9 @@ class Segment:
         Parameters
         ----------
         data : dict
-            Dictionary with keys ``"name"``, ``"start_sec"`` and ``"end_sec"``.
+            Dictionary with segment fields. Unknown keys are ignored;
+            missing optional keys fall back to their defaults, ensuring
+            backward compatibility with older ``.segments.json`` files.
 
         Returns
         -------
@@ -84,4 +99,8 @@ class Segment:
             name=data["name"],
             start_sec=float(data["start_sec"]),
             end_sec=float(data["end_sec"]),
+            notes=data.get("notes", ""),
+            color=data.get("color", ""),
+            category=data.get("category", ""),
+            practice_count=int(data.get("practice_count", 0)),
         )

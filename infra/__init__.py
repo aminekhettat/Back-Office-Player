@@ -14,5 +14,5 @@ file system.
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2025-12-02
-:version: 0.1.0
+:version: 1.1.0
 """

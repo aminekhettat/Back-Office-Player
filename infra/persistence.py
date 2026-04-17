@@ -12,7 +12,7 @@ the original audio file name.
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2025-12-02
-:version: 0.1.0
+:version: 1.1.0
 """
 
 from __future__ import annotations
@@ -112,3 +112,86 @@ def save_segments(audio_file_path: Optional[Path], manager: SegmentManager) -> N
     except Exception as exc:
         # In a real application, you would use logging instead of print.
         print(f"Error while saving segments: {exc}")
+
+
+def export_segments_text(
+    audio_file_path: Optional[Path],
+    manager: SegmentManager,
+    output_path: Path,
+    fmt: str = "csv",
+) -> None:
+    """
+    Export all segments to a plain-text file (CSV or TXT).
+
+    Parameters
+    ----------
+    audio_file_path : Path or None
+        Path to the audio file (used for the ``audio_file`` column).
+    manager : SegmentManager
+        Segment manager whose segments are exported.
+    output_path : Path
+        Destination file path.
+    fmt : str
+        Format: ``"csv"`` (default) produces a CSV with a header row;
+        ``"txt"`` produces one segment per line in human-readable form.
+
+    Raises
+    ------
+    ValueError
+        If *fmt* is not ``"csv"`` or ``"txt"``.
+    """
+    import csv as csv_mod
+
+    if fmt not in ("csv", "txt"):
+        raise ValueError(f"Unknown format: {fmt!r}. Use 'csv' or 'txt'.")
+
+    audio_name = str(audio_file_path) if audio_file_path else ""
+    segments = manager.list_segments()
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if fmt == "csv":
+        with output_path.open("w", newline="", encoding="utf-8") as f:
+            fieldnames = [
+                "audio_file",
+                "name",
+                "start_sec",
+                "end_sec",
+                "duration_sec",
+                "category",
+                "notes",
+                "practice_count",
+                "color",
+            ]
+            writer = csv_mod.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for seg in segments:
+                writer.writerow(
+                    {
+                        "audio_file": audio_name,
+                        "name": seg.name,
+                        "start_sec": f"{seg.start_sec:.3f}",
+                        "end_sec": f"{seg.end_sec:.3f}",
+                        "duration_sec": f"{seg.duration():.3f}",
+                        "category": seg.category,
+                        "notes": seg.notes,
+                        "practice_count": seg.practice_count,
+                        "color": seg.color,
+                    }
+                )
+    else:  # txt
+        with output_path.open("w", encoding="utf-8") as f:
+            f.write(f"Segments for: {audio_name}\n")
+            f.write("-" * 60 + "\n")
+            for i, seg in enumerate(segments, 1):
+                f.write(
+                    f"{i}. {seg.name}\n"
+                    f"   Start : {seg.start_sec:.3f} s\n"
+                    f"   End   : {seg.end_sec:.3f} s\n"
+                    f"   Dur.  : {seg.duration():.3f} s\n"
+                )
+                if seg.category:
+                    f.write(f"   Cat.  : {seg.category}\n")
+                if seg.notes:
+                    f.write(f"   Notes : {seg.notes}\n")
+                f.write("\n")

@@ -15,7 +15,7 @@ Features
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2025-12-02
-:version: 0.1.0
+:version: 1.1.0
 """
 
 from __future__ import annotations
@@ -122,6 +122,74 @@ class SegmentManager:
         return {
             "segments": [s.to_dict() for s in self._segments],
         }
+
+    def move_up(self, name: str) -> bool:
+        """
+        Move the segment with *name* one position earlier in the list.
+
+        Parameters
+        ----------
+        name : str
+            Name of the segment to move.
+
+        Returns
+        -------
+        bool
+            ``True`` if the segment was moved, ``False`` if it was not
+            found or was already first.
+        """
+        for i, seg in enumerate(self._segments):
+            if seg.name == name:
+                if i == 0:
+                    return False
+                self._segments[i - 1], self._segments[i] = (
+                    self._segments[i],
+                    self._segments[i - 1],
+                )
+                return True
+        return False
+
+    def move_down(self, name: str) -> bool:
+        """
+        Move the segment with *name* one position later in the list.
+
+        Parameters
+        ----------
+        name : str
+            Name of the segment to move.
+
+        Returns
+        -------
+        bool
+            ``True`` if the segment was moved, ``False`` if it was not
+            found or was already last.
+        """
+        for i, seg in enumerate(self._segments):
+            if seg.name == name:
+                if i == len(self._segments) - 1:
+                    return False
+                self._segments[i], self._segments[i + 1] = (
+                    self._segments[i + 1],
+                    self._segments[i],
+                )
+                return True
+        return False
+
+    def list_by_category(self, category: str) -> List["Segment"]:
+        """
+        Return all segments that belong to *category*.
+
+        Parameters
+        ----------
+        category : str
+            Category label to filter by.
+
+        Returns
+        -------
+        list[Segment]
+            Segments whose ``category`` field matches *category*.
+        """
+        return [s for s in self._segments if s.category == category]
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SegmentManager":

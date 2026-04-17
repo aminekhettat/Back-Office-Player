@@ -32,11 +32,13 @@ from __future__ import annotations
 
 import threading
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 import numpy as np
 import librosa
 import sounddevice as sd
+
+from core.pitch_engine import PitchEngine
 
 
 class AudioPlayer:
@@ -71,6 +73,12 @@ class AudioPlayer:
         self._duration: float = 0.0
         self._volume: int = 80   # 0-100
         self._tempo: float = 1.0  # 0.5-2.0
+
+        # Pitch parameters
+        self._pitch_semitones: float = 0.0      # semitone offset (-12 to +12)
+        self._pitch_preserving: bool = False    # use PitchEngine for tempo
+        self._processed_audio: Optional[np.ndarray] = None  # pitch/stretch result
+        self._pitch_engine = PitchEngine()
 
         # Playback thread / stream
         self._playback_thread: Optional[threading.Thread] = None
@@ -227,6 +235,23 @@ class AudioPlayer:
         with self._lock:
             return self._duration
 
+    def get_audio_snapshot(self) -> "tuple[Optional[np.ndarray], int]":
+        """
+        Return a thread-safe snapshot of the current audio data and sample rate.
+
+        This method is the public API for read-only access to the raw audio
+        data (e.g. for waveform rendering). The returned array is a reference
+        to the internal buffer — do **not** modify it.
+
+        Returns
+        -------
+        tuple[np.ndarray or None, int]
+            ``(audio_data, sample_rate)`` where *audio_data* is ``None``
+            if no file is loaded.
+        """
+        with self._lock:
+            return self._audio_data, self._sample_rate
+
     # ------------------------------------------------------------------ #
     # Volume
     # ------------------------------------------------------------------ #
@@ -265,6 +290,123 @@ class AudioPlayer:
         """Return the current tempo factor."""
         with self._lock:
             return self._tempo
+
+    # ------------------------------------------------------------------ #
+    # Pitch control
+    # ------------------------------------------------------------------ #
+    def set_pitch_semitones(self, semitones: float) -> None:
+        """
+        Set the pitch offset in semitones.
+
+        Parameters
+        ----------
+        semitones : float
+            Pitch shift in semitones, clamped to ``[-12, 12]``.
+        """
+        with self._lock:
+            self._pitch_semitones = max(-12.0, min(12.0, semitones))
+
+    def get_pitch_semitones(self) -> float:
+        """Return the current pitch offset in semitones."""
+        with self._lock:
+            return self._pitch_semitones
+
+    def set_pitch_preserving(self, enabled: bool) -> None:
+        """
+        Enable or disable pitch-preserving time-stretch.
+
+        When ``True``, ``apply_pitch_async`` must be called after any
+        tempo or pitch change to regenerate ``_processed_audio``.
+
+        Parameters
+        ----------
+        enabled : bool
+            ``True`` to use the :class:`~core.pitch_engine.PitchEngine`
+            for tempo and pitch, ``False`` for tape-style playback.
+        """
+        with self._lock:
+            self._pitch_preserving = enabled
+
+    def get_pitch_preserving(self) -> bool:
+        """Return whether pitch-preserving mode is active."""
+        with self._lock:
+            return self._pitch_preserving
+
+    def apply_pitch_async(self, on_ready: Callable[[], None]) -> None:
+        """
+        Regenerate ``_processed_audio`` in a background thread.
+
+        Applies pitch-shift (if ``_pitch_semitones != 0``) and/or
+        time-stretch (if pitch-preserving mode is active and
+        ``_tempo != 1.0``) to ``_audio_data``.
+
+        Parameters
+        ----------
+        on_ready : callable
+            Zero-argument callback invoked (from the worker thread) when
+            ``_processed_audio`` has been updated.  Qt callers must wrap
+            this in ``QTimer.singleShot(0, ...)`` to return to the main
+            thread.
+        """
+        with self._lock:
+            if self._audio_data is None:
+                on_ready()
+                return
+            audio = self._audio_data.copy()
+            sr = self._sample_rate
+            semitones = self._pitch_semitones
+            tempo = self._tempo
+            pitch_preserving = self._pitch_preserving
+
+        def _apply_shift(shifted: np.ndarray) -> None:
+            if pitch_preserving and tempo != 1.0:
+                def _apply_stretch(stretched: np.ndarray) -> None:
+                    with self._lock:
+                        self._processed_audio = stretched
+                    on_ready()
+
+                def _on_stretch_error(exc: Exception) -> None:
+                    print(f"PitchEngine stretch error: {exc}")
+                    with self._lock:
+                        self._processed_audio = shifted
+                    on_ready()
+
+                self._pitch_engine.stretch(
+                    shifted, sr, tempo, _apply_stretch, _on_stretch_error
+                )
+            else:
+                with self._lock:
+                    self._processed_audio = shifted
+                on_ready()
+
+        def _on_shift_error(exc: Exception) -> None:
+            print(f"PitchEngine shift error: {exc}")
+            # Fall back: just use raw audio
+            with self._lock:
+                self._processed_audio = None
+            on_ready()
+
+        if semitones != 0.0:
+            self._pitch_engine.shift(audio, sr, semitones, _apply_shift, _on_shift_error)
+        elif pitch_preserving and tempo != 1.0:
+            def _apply_stretch_direct(stretched: np.ndarray) -> None:
+                with self._lock:
+                    self._processed_audio = stretched
+                on_ready()
+
+            def _on_stretch_error_direct(exc: Exception) -> None:
+                print(f"PitchEngine stretch error: {exc}")
+                with self._lock:
+                    self._processed_audio = None
+                on_ready()
+
+            self._pitch_engine.stretch(
+                audio, sr, tempo, _apply_stretch_direct, _on_stretch_error_direct
+            )
+        else:
+            with self._lock:
+                self._processed_audio = None
+            on_ready()
 
     # ------------------------------------------------------------------ #
     # Private: playback worker
@@ -311,23 +453,37 @@ class AudioPlayer:
                 with self._lock:
                     if self._stop_playback_thread or not self._is_playing:
                         break
-                    if self._audio_data is None:
+
+                    # Use pitch-processed audio when available, else raw data.
+                    active_audio = (
+                        self._processed_audio
+                        if self._processed_audio is not None
+                        else self._audio_data
+                    )
+                    if active_audio is None:
                         break
 
                     pos = self._current_sample_pos
-                    total = len(self._audio_data)
+                    total = len(active_audio)
 
                     if pos >= total:
                         self._is_playing = False
                         break
 
-                    tempo = self._tempo
+                    # When pitch-preserving mode is active the pre-processed
+                    # audio already has the correct tempo baked in, so use
+                    # tempo=1.0 for the resampling step; otherwise apply the
+                    # tape-style speed change as before.
+                    if self._pitch_preserving and self._processed_audio is not None:
+                        tempo = 1.0
+                    else:
+                        tempo = self._tempo
                     volume = self._volume / 100.0
 
                     # Source samples to consume for this output block.
                     source_size = max(1, int(bs * tempo))
                     end_pos = min(pos + source_size, total)
-                    chunk = self._audio_data[pos:end_pos].copy() * volume
+                    chunk = active_audio[pos:end_pos].copy() * volume
                     actual = len(chunk)
 
                     # Resample chunk → exactly bs output samples.
