@@ -11,7 +11,7 @@ Import this module wherever the version string is needed::
 :license: Apache-2.0
 """
 
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 __author__ = "Amine Khettat"
 __organization__ = "BLIND SYSTEMS"
 __license__ = "Apache-2.0"
