@@ -143,6 +143,19 @@ class TestOnOpenFile:
         w.on_open_file()
         assert w.current_audio_path is None
 
+    def test_valid_dialog_calls_load(self, window, monkeypatch, tmp_path):
+        """File dialog returning a path calls _load_audio_file."""
+        w, player = window
+        audio_file = str(tmp_path / "test.mp3")
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QFileDialog.getOpenFileName",
+            lambda *a, **k: (audio_file, ""),
+        )
+        calls = []
+        monkeypatch.setattr(w, "_load_audio_file", lambda p: calls.append(p))
+        w.on_open_file()
+        assert calls == [Path(audio_file)]
+
 
 # ---------------------------------------------------------------------------
 # _load_audio_file
@@ -998,8 +1011,25 @@ class TestExportSegmentAudio:
             "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
         )
         player.get_audio_snapshot.return_value = (None, 44100)
-        with patch("infra.audio_export.export_segment_wav"):
+        with patch("ui.main_window.export_segment_wav"):
             w._on_export_segment_wav(self._seg())
+
+    def test_export_wav_error_shows_critical(self, window, monkeypatch, tmp_path):
+        """_on_export_segment_wav shows critical dialog on export error."""
+        w, player = window
+        out = str(tmp_path / "out.wav")
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QFileDialog.getSaveFileName",
+            lambda *a, **k: (out, "WAV Files"),
+        )
+        shown = []
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QMessageBox.critical", lambda *a, **k: shown.append(1)
+        )
+        player.get_audio_snapshot.return_value = (None, 44100)
+        with patch("ui.main_window.export_segment_wav", side_effect=OSError("write error")):
+            w._on_export_segment_wav(self._seg())
+        assert shown
 
     def test_export_mp3_cancelled_is_noop(self, window, monkeypatch):
         """_on_export_segment_mp3 does nothing when dialog is cancelled."""
@@ -1022,8 +1052,25 @@ class TestExportSegmentAudio:
             "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
         )
         player.get_audio_snapshot.return_value = (None, 44100)
-        with patch("infra.audio_export.export_segment_mp3"):
+        with patch("ui.main_window.export_segment_mp3"):
             w._on_export_segment_mp3(self._seg())
+
+    def test_export_mp3_error_shows_critical(self, window, monkeypatch, tmp_path):
+        """_on_export_segment_mp3 shows critical dialog on export error."""
+        w, player = window
+        out = str(tmp_path / "out.mp3")
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QFileDialog.getSaveFileName",
+            lambda *a, **k: (out, "MP3 Files"),
+        )
+        shown = []
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QMessageBox.critical", lambda *a, **k: shown.append(1)
+        )
+        player.get_audio_snapshot.return_value = (None, 44100)
+        with patch("ui.main_window.export_segment_mp3", side_effect=OSError("write error")):
+            w._on_export_segment_mp3(self._seg())
+        assert shown
 
 
 # ---------------------------------------------------------------------------

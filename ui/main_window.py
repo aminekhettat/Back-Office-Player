@@ -141,6 +141,7 @@ class MainWindowQt(QMainWindow):
         self._qt_shortcuts: List[QShortcut] = []  # keeps shortcuts alive
         self._loader_thread: Optional[AudioLoaderThread] = None
         self._command_history = CommandHistory()
+        self._save_settings_timer: Optional[QTimer] = None  # created in _configure_timer
 
         self._build_ui()
         self._build_menu_bar()
@@ -154,6 +155,11 @@ class MainWindowQt(QMainWindow):
         initial_volume = int(self.settings.get("default_volume", 80))
         self.slider_volume.setValue(initial_volume)
         self.audio_player.set_volume(initial_volume)
+
+        # Restore last tempo from settings (after _configure_timer so debounce is ready)
+        initial_tempo = int(self.settings.get("last_tempo", 100))
+        self.slider_tempo.setValue(initial_tempo)
+        self.audio_player.set_tempo(initial_tempo / 100.0)
 
         # Apply pitch-preserving setting
         self.audio_player.set_pitch_preserving(
@@ -352,6 +358,23 @@ class MainWindowQt(QMainWindow):
         main_layout.addWidget(self.lbl_status)
 
         self.setCentralWidget(central)
+
+        # Tab order: transport controls first, then sliders, then segment tools
+        QWidget.setTabOrder(self.btn_open, self.btn_play)
+        QWidget.setTabOrder(self.btn_play, self.btn_pause)
+        QWidget.setTabOrder(self.btn_pause, self.btn_stop)
+        QWidget.setTabOrder(self.btn_stop, self.slider_volume)
+        QWidget.setTabOrder(self.slider_volume, self.slider_tempo)
+        QWidget.setTabOrder(self.slider_tempo, self.slider_pitch)
+        QWidget.setTabOrder(self.slider_pitch, self.slider_position)
+        QWidget.setTabOrder(self.slider_position, self.btn_set_a)
+        QWidget.setTabOrder(self.btn_set_a, self.btn_set_b)
+        QWidget.setTabOrder(self.btn_set_b, self.btn_clear_ab)
+        QWidget.setTabOrder(self.btn_clear_ab, self.chk_loop)
+        QWidget.setTabOrder(self.chk_loop, self.btn_save_segment)
+        QWidget.setTabOrder(self.btn_save_segment, self.btn_export_config)
+        QWidget.setTabOrder(self.btn_export_config, self.btn_import_config)
+
         self.retranslate_ui()
 
     # ================================================================== #
@@ -1064,7 +1087,7 @@ class MainWindowQt(QMainWindow):
             )
             self.lbl_status.setText(
                 tr("status_config_imported",
-                count=len(self.segment_manager.list_segments()))
+                   count=len(self.segment_manager.list_segments()))
             )
         except Exception as exc:  # pragma: no cover
             QMessageBox.critical(
