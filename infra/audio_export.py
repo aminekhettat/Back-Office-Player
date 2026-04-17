@@ -16,7 +16,7 @@ can treat them uniformly.
 :organization: BLIND SYSTEMS
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
-:version: 1.1.0
+:version: 1.1.1
 """
 
 from __future__ import annotations
