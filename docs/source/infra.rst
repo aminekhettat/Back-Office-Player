@@ -34,3 +34,30 @@ Practice History
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+Internationalisation (i18n)
+----------------------------
+
+.. automodule:: infra.i18n
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Audio Export
+------------
+
+.. automodule:: infra.audio_export
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Updater
+-------
+
+.. automodule:: infra.updater
+   :members:
+   :undoc-members:
+   :show-inheritance:

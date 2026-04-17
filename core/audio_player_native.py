@@ -25,7 +25,7 @@ Requirements
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2025-12-02
-:version: 1.1.1
+:version: 1.1.2
 """
 
 from __future__ import annotations
@@ -237,6 +237,11 @@ class AudioPlayer:
         """Return the media duration in seconds."""
         with self._lock:
             return self._duration
+
+    def is_playing(self) -> bool:
+        """Return ``True`` while audio is actively playing (not paused, not stopped)."""
+        with self._lock:
+            return self._is_playing
 
     def get_audio_snapshot(self) -> tuple[Optional[np.ndarray], int]:
         """

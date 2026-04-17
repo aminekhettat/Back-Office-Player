@@ -49,3 +49,12 @@ Settings Dialog
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+History Dialog
+--------------
+
+.. automodule:: ui.history_dialog
+   :members:
+   :undoc-members:
+   :show-inheritance:

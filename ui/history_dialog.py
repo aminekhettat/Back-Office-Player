@@ -8,7 +8,7 @@ and allows the user to export the history to CSV.
 :organization: BLIND SYSTEMS
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
-:version: 1.1.1
+:version: 1.1.2
 """
 
 from __future__ import annotations

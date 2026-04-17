@@ -1,285 +1,202 @@
-# Back-Office Player (BOP) – Audio Practice Tool
+# Back-Office Player (BOP) — Audio Practice Tool
 
-Back-Office Player (BOP) is a Windows desktop application written in Python that helps music students practice at home using rehearsal recordings.
+**Back-Office Player (BOP)** is a Windows desktop application written in Python that helps music students practise at home using rehearsal recordings.
 
-The application focuses on:
-- Simple, robust audio playback (**no VLC required** — native engine using librosa + sounddevice).
-- A–B looping (repeat a selected part of the track).
-- Named segments (save, navigate and manage practice sections).
-- Tempo control (slow down or speed up playback).
-- Export / import practice configurations (`.bop` files).
-- A keyboard- and screen-reader-friendly user interface (Qt / PySide6).
-- A clear, minimal design with a dedicated application icon.
-
-**Current version:** 1.1.1
-
-The project is developed by **[BLIND SYSTEMS](https://www.blindsystems.org)**
-for the students of the **[Culture Musique](https://www.sabamusic.fr)**
-association.
+**Current version:** 1.1.2 — developed by [BLIND SYSTEMS](https://www.blindsystems.org) for the students of the [Culture Musique](https://www.sabamusic.fr) association.
 
 ---
 
-## Main Features
+## Key Features
 
-- Play common audio formats supported by librosa: `mp3`, `wav`, `wma`, `flac`, `ogg`, etc.
-- Basic transport controls: **Play**, **Pause**, **Stop**.
-- Volume control (0–100) with persistent default volume.
-- Time position slider and time display `mm:ss / mm:ss`.
-- A–B loop:
-  - Set **Point A** and **Point B** on the timeline.
-  - Loop continuously between A and B.
-  - Clear A/B and disable looping at any time.
-- **Named segments** (new in v0.3):
-  - Save the current A–B loop as a named segment (e.g. "Verse 1", "Chorus").
-  - View all segments in a dedicated list widget.
-  - Jump to any segment with a single click or keyboard.
-  - Delete segments individually.
-  - Segments auto-loaded when opening the same audio file again.
-- **Tempo control** (new in v0.3):
-  - Slider from 50% to 200% of the original speed.
-  - Affects playback position tracking.
-- **Export / Import practice config** (new in v0.3):
-  - Save all segments + volume + tempo to a `.bop` file.
-  - Share or reload practice configurations at any time.
-- Keyboard navigation:
-  - Full control of the UI with Tab / Shift+Tab.
-  - Position slider controllable with **left/right arrow keys** when focused.
-  - Tempo slider controllable with **up/down arrow keys** when focused.
-- Keyboard shortcuts for frequent actions.
-- Settings stored in a simple JSON file (`settings.json`).
-- Modular architecture (`core` / `infra` / `ui`) ready for extensions.
-- Custom application icon (`BOP.ico`).
+- **Native audio engine** — no VLC required. Playback powered by `librosa` + `sounddevice`.
+- **Transport controls** — Play, Pause, Stop with keyboard shortcuts.
+- **A–B loop** — set loop start (A) and end (B) anywhere on the timeline; loop continuously or a fixed number of times.
+- **Named segments** — save any A–B region as a named segment, then jump to it with one key press.
+- **Tempo control** — slider from 50 % to 200 %; remembers your last value across sessions.
+- **Pitch control** — shift pitch ±12 semitones independently of tempo.
+- **Pitch-preserving tempo** — optional time-stretching mode that changes speed without affecting pitch (via `librosa`).
+- **Progressive tempo** — practice panel that automatically ramps the tempo up after each completed loop.
+- **Waveform display** — interactive waveform with A/B markers and playhead; click to seek.
+- **Practice history** — every session is logged (file, duration, loops, tempo); viewable and exportable as CSV.
+- **Segment export** — export any segment to WAV or MP3.
+- **Export / import config** — save all segments + settings to a `.bop` file and share or reload them.
+- **Undo / redo** — Ctrl+Z / Ctrl+Y for segment add and delete operations.
+- **Themes** — default, dark, and high-contrast colour themes.
+- **Bilingual UI** — French and English, switchable at runtime from the Settings menu.
+- **Accessible** — full keyboard and screen-reader (NVDA, JAWS) support.
 
 ---
 
 ## Accessibility
 
-The UI is built with **Qt (PySide6)** for better compatibility with screen readers (NVDA, JAWS, etc.) on Windows:
+The UI is built with **Qt (PySide6)** for screen-reader compatibility on Windows:
 
-- All buttons and controls have clear text labels.
-- Accessible names and descriptions are set where useful.
-- Standard keyboard behavior is preserved:
-  - When a button has focus, **Space** or **Enter** activate it.
-  - When the position slider has focus, **left/right arrows** move the cursor and update playback position.
-  - When the tempo slider has focus, **up/down arrows** adjust the tempo.
-- No drag-and-drop or complex mouse gestures are required for core usage.
-- Status messages (file loaded, A/B points set, segments saved, etc.) are exposed via a status label that screen readers can announce.
+- All buttons, sliders, and controls have accessible names and descriptions.
+- Full keyboard navigation with Tab / Shift+Tab; explicit tab order puts transport controls first.
+- Position slider: **left/right arrows** to seek ±1 second.
+- Tempo slider: **up/down arrows** in 5 % steps.
+- Status label announces every significant event (file loaded, A/B set, segment saved, etc.).
+- Position is periodically announced to screen readers (configurable interval).
 
 ---
 
-## Architecture Overview
+## Architecture
 
-The project is organized into three main layers:
+The project is organised in three layers:
 
-- `core/` – Domain logic, independent from the UI:
-  - `audio_player_native.py`: native audio player using `librosa` + `sounddevice` (no VLC). Supports tempo control, seeking, and volume.
-  - `audio_player.py`: legacy VLC-based player (kept for reference, not used).
-  - `segment.py`: defines an A–B segment (name, start time, end time).
-  - `segment_manager.py`: manages collections of segments.
+```
+core/       Domain logic — no UI dependency
+infra/      Persistence, I/O, and infrastructure helpers
+ui/         Qt widgets and main window
+```
 
-- `infra/` – Infrastructure and persistence:
-  - `persistence.py`: saves/loads segments associated with an audio file (JSON, stored next to the audio file as `<filename>.segments.json`).
-  - `settings.py`: saves/loads simple application settings (last folder, volume).
+### `core/`
 
-- `ui/` – Qt user interface:
-  - `main_window.py`: main window, widgets, callbacks, keyboard shortcuts, A–B loop logic, tempo, segment management, and config import/export.
-  - `segment_list_widget.py`: reusable Qt widget displaying the segment list with jump and delete controls.
+| Module | Description |
+|--------|-------------|
+| `audio_player_native.py` | Native audio player (librosa + sounddevice). Tempo, pitch, volume, seek. |
+| `audio_loader.py` | `QThread` that loads audio files asynchronously. |
+| `pitch_engine.py` | Pitch-shifting and time-stretching using librosa. |
+| `segment.py` | `Segment` dataclass (name, start, end, category, color, notes). |
+| `segment_manager.py` | Collection of segments with add/remove/move/sort. |
+| `practice_session.py` | Session timer, loop counter, progressive-tempo logic. |
+| `commands.py` | Command pattern for undo/redo (`AddSegmentCommand`, `RemoveSegmentCommand`, `CommandHistory`). |
 
-- Root:
-  - `app.py`: entry point that wires everything together and starts the Qt event loop.
-  - `resources/BOPIcon.png`: source PNG icon (for design and conversions).
-  - `resources/BOP.ico`: Windows icon used by the application.
+### `infra/`
 
-This separation makes it easier to maintain and test the non-UI logic and to evolve the UI independently.
+| Module | Description |
+|--------|-------------|
+| `persistence.py` | Save/load segments as `<audio>.segments.json` next to the audio file. |
+| `settings.py` | Save/load user settings to `settings.json` (platformdirs). |
+| `practice_history.py` | Log practice sessions to `practice_history.json`; CSV export. |
+| `i18n.py` | Lightweight translation engine (French / English). |
+| `audio_export.py` | Export a segment slice to WAV (16-bit) or MP3 (via lameenc). |
+| `updater.py` | Background GitHub release checker. |
+
+### `ui/`
+
+| Module | Description |
+|--------|-------------|
+| `main_window.py` | Main window: all widgets, A–B loop logic, shortcuts, session management. |
+| `waveform_widget.py` | RMS waveform display with playhead, A/B markers, and segment ticks. |
+| `segment_list_widget.py` | Segment list with jump, delete, move-up/down, export, and category filter. |
+| `practice_panel.py` | Practice session panel (loop count, delay, progressive tempo, session timer). |
+| `settings_dialog.py` | Preferences dialog (shortcuts, theme, accessibility, audio). |
+| `history_dialog.py` | Read-only practice history table with CSV export. |
 
 ---
 
 ## Requirements
 
-- **Windows** (also works on Linux/macOS with minor adjustments)
-- **Python** 3.10+ (recommended)
-- **No VLC required** — audio is handled natively via `librosa` and `sounddevice`
-- Python packages (installed via `pip`):
-  - `PySide6`
-  - `librosa>=0.10.0`
-  - `sounddevice>=0.4.5`
-  - `numpy>=1.20.0`
-  - `scipy>=1.7.0`
-  - (Optional for documentation) `sphinx` and related extensions
+- **Windows** (also runs on Linux / macOS with minor path adjustments)
+- **Python 3.10+**
+- Dependencies listed in `requirements.txt`:
 
-A `requirements.txt` file is provided for installing Python dependencies.
+```
+librosa>=0.10.0
+sounddevice>=0.4.5
+numpy>=1.20.0
+scipy>=1.7.0
+PySide6
+platformdirs>=3.0.0
+```
+
+> MP3 export requires `lameenc` (`pip install lameenc`). The application runs without it but the MP3 export button will error.
 
 ---
 
 ## Installation
 
-1. **Clone the repository**
+```bash
+git clone https://github.com/aminekhettat/Back-Office-Player.git
+cd Back-Office-Player
 
-   ```bash
-   git clone https://github.com/aminekhettat/Back-Office-Player.git
-   cd Back-Office-Player
-   ```
+# Create and activate a virtual environment (Windows)
+python -m venv bopenv
+bopenv\Scripts\activate.bat
 
-2. **Create and activate a virtual environment (Windows)**
-
-   ```bash
-   python -m venv bopenv
-   bopenv\Scripts\activate.bat
-   ```
-
-3. **Install Python dependencies**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-   > **Note:** No VLC installation required. All audio decoding is handled by `librosa` and `sounddevice`.
+# Install dependencies
+pip install -r requirements.txt
+```
 
 ---
 
-## Icons
-
-The application uses a custom icon provided in the `resources` folder:
-
-- `resources/BOPIcon.png` – base PNG icon (for editing or future conversions).
-- `resources/BOP.ico` – icon used by the application and later by installers / .exe packaging.
-
-The icon is applied at two levels:
-
-- Application icon (taskbar, Alt+Tab) set in `app.py`:
-
-  ```python
-  app.setWindowIcon(QIcon("resources/BOP.ico"))
-  ```
-
-- Window icon set in `ui/main_window.py`:
-
-  ```python
-  self.setWindowIcon(QIcon("resources/BOP.ico"))
-  ```
-
----
-
-## Running the Application from Source
-
-With the virtual environment activated in the project folder:
+## Running from Source
 
 ```bash
 python app.py
 ```
 
-A window titled **"Back-Office Player (BOP)"** should appear, with the BOP icon in the title bar.
-
 ---
 
-## Building a Windows Executable (PyInstaller)
-
-With your virtual environment active at the project root:
+## Building a Windows Executable
 
 ```powershell
 pip install pyinstaller
 pyinstaller --name BackOfficePlayer --windowed --icon="resources/BOP.ico" --add-data "resources;resources" app.py
 ```
 
-This produces:
-
-```text
-dist/
-└─ BackOfficePlayer/
-   ├─ BackOfficePlayer.exe
-   └─ resources/
-      └─ BOP.ico
-```
-
-You can then run:
-
-```powershell
-cd dist\BackOfficePlayer
-.\BackOfficePlayer.exe
-```
-
-> **Note:** VLC is no longer required on end-user machines.
+Output: `dist\BackOfficePlayer\BackOfficePlayer.exe`
 
 ---
 
 ## Basic Usage
 
-1. **Open an audio file**
+### Open a file
+Click **Open audio file…** or press **Ctrl+O**.
 
-   - Click **"Open audio file…"**, or
-   - Use the keyboard shortcut **Ctrl+O**.
-   - Choose a supported audio file (`.mp3`, `.wav`, etc.).
+### Transport
+| Button | Shortcut |
+|--------|----------|
+| Play | Ctrl+P |
+| Pause | Ctrl+Shift+P |
+| Stop | Ctrl+S |
 
-2. **Play / Pause / Stop**
+### A–B Loop
+1. Start playback.
+2. Press **Set A** (Ctrl+Shift+A) at the loop start.
+3. Press **Set B** (Ctrl+Shift+B) at the loop end.
+4. Check **Loop A–B** to enable continuous looping.
+5. Press **Clear A/B** to remove markers.
 
-   - Use the buttons **Play**, **Pause**, **Stop**, or
-   - Use keyboard shortcuts:
-     - **Ctrl+P**: Play
-     - **Ctrl+Shift+P**: Pause
-     - **Ctrl+S**: Stop
+### Named Segments
+1. Set A and B, then press **Save Segment** (Ctrl+Shift+S) and enter a name.
+2. The segment appears in the list. Double-click or select + **Jump to Segment** to navigate.
+3. **Ctrl+Z** undoes the last add/delete; **Ctrl+Y** redoes it.
 
-3. **Seek in the track**
+### Tempo & Pitch
+- **Tempo slider** (50–200 %): slows down or speeds up playback. Up/down arrows in 5 % steps. Value is saved and restored between sessions.
+- **Pitch slider** (−12 to +12 semitones): shifts pitch without changing speed.
+- Enable **Pitch-preserving tempo** in Preferences for time-stretching (changes speed without changing pitch).
 
-   - Move focus to the position slider via Tab.
-   - Use **left/right arrow keys** to move the cursor (1 second per step).
-   - The label next to it shows current and total time in `mm:ss / mm:ss`.
+### Practice Session (Progressive Tempo)
+In the **Practice Session** panel you can configure:
+- **Loop count** — stop after N loops (0 = infinite).
+- **Loop delay** — pause between loops (seconds).
+- **Progressive tempo** — automatically increment tempo by a fixed step after each loop until a target is reached.
 
-4. **Volume**
-
-   - Adjust **Volume** with the slider (0–100).
-   - Volume is saved in `settings.json` and restored on next run.
-
-5. **Tempo**
-
-   - Adjust **Tempo** with the slider (50%–200%).
-   - 100% = normal speed. Below 100% slows down, above 100% speeds up.
-   - Use **up/down arrow keys** when the slider is focused (5% steps).
-
-6. **A–B Loop**
-
-   - Start playback.
-   - At the desired start time, click **Set A** or use **Ctrl+Shift+A**.
-   - Let the track continue, then at the desired end time, click **Set B** or use **Ctrl+Shift+B**.
-   - Check **Loop A–B** to enable the loop.
-   - Use **Clear A/B** to remove both points and disable looping.
-
-7. **Named Segments**
-
-   - Set A and B points, then click **Save Segment** (or **Ctrl+Shift+S**).
-   - Enter a name for the segment (e.g. "Chorus", "Difficult passage").
-   - The segment appears in the list below.
-   - Double-click a segment or select it and click **Jump to Segment** to navigate to it.
-   - Click **Delete Segment** to remove a segment from the list.
-
-8. **Export / Import Configuration**
-
-   - Click **Export Config** (or **Ctrl+E**) to save all segments, volume, and tempo to a `.bop` file.
-   - Click **Import Config** (or **Ctrl+I**) to reload a previously exported `.bop` file.
+### Practice History
+Open **Settings → Practice History…** (Ctrl+H) to view all past sessions in a table. Click **Export CSV…** to save them.
 
 ---
 
 ## Keyboard Shortcuts Summary
 
 | Shortcut | Action |
-|---|---|
-| **Ctrl+O** | Open audio file |
-| **Ctrl+P** | Play |
-| **Ctrl+Shift+P** | Pause |
-| **Ctrl+S** | Stop |
-| **Ctrl+Shift+A** | Set point A at current position |
-| **Ctrl+Shift+B** | Set point B at current position |
-| **Ctrl+Shift+S** | Save current A–B as a named segment |
-| **Ctrl+E** | Export practice configuration (.bop) |
-| **Ctrl+I** | Import practice configuration (.bop) |
-
-Standard widget behavior:
-
-- With focus on a **button**: **Space** or **Enter** activate it.
-- With focus on the **position slider**:
-  - **Left arrow**: move backward by 1 second.
-  - **Right arrow**: move forward by 1 second.
-- With focus on the **tempo slider**:
-  - **Up/Down arrows**: adjust tempo by 5%.
+|----------|--------|
+| Ctrl+O | Open audio file |
+| Ctrl+P | Play |
+| Ctrl+Shift+P | Pause |
+| Ctrl+S | Stop |
+| Ctrl+Shift+A | Set point A |
+| Ctrl+Shift+B | Set point B |
+| Ctrl+Shift+S | Save current A–B as segment |
+| Ctrl+E | Export practice config (.bop) |
+| Ctrl+I | Import practice config (.bop) |
+| Ctrl+H | Open practice history |
+| Ctrl+Z | Undo |
+| Ctrl+Y | Redo |
+| Ctrl+Q | Quit |
 
 ---
 
@@ -287,133 +204,123 @@ Standard widget behavior:
 
 ```text
 Back-Office-Player/
-├─ app.py                        # Application entry point (Qt)
-├─ requirements.txt              # Python dependencies
-├─ settings.json                 # Generated at runtime (user settings)
+├─ app.py                          # Entry point
+├─ __version__.py                  # Single source of truth for version
+├─ requirements.txt                # Runtime dependencies
+├─ requirements-dev.txt            # Dev dependencies (test, lint, docs, packaging)
 ├─ resources/
-│  ├─ BOPIcon.png                # Base PNG icon
-│  └─ BOP.ico                   # Application icon
+│  ├─ BOPIcon.png                  # Source icon
+│  └─ BOP.ico                     # Windows application icon
 ├─ core/
-│  ├─ __init__.py
-│  ├─ audio_player_native.py     # Native audio player (librosa + sounddevice)
-│  ├─ audio_player.py            # Legacy VLC-based player (not used)
-│  ├─ segment.py                 # Segment (A–B)
-│  └─ segment_manager.py         # Segment collection management
+│  ├─ audio_player_native.py       # Native audio player
+│  ├─ audio_loader.py              # Async audio loader (QThread)
+│  ├─ pitch_engine.py              # Pitch shift / time-stretch engine
+│  ├─ segment.py                   # Segment dataclass
+│  ├─ segment_manager.py           # Segment collection
+│  ├─ practice_session.py          # Session timer and progressive tempo
+│  └─ commands.py                  # Undo/redo command pattern
 ├─ infra/
-│  ├─ __init__.py
-│  ├─ persistence.py             # Saving/loading segments (JSON per audio file)
-│  └─ settings.py                # Saving/loading settings
+│  ├─ persistence.py               # Segment save/load (JSON per audio file)
+│  ├─ settings.py                  # User settings (platformdirs)
+│  ├─ practice_history.py          # Practice history log + CSV export
+│  ├─ i18n.py                      # Translation engine (fr/en)
+│  ├─ audio_export.py              # WAV / MP3 export helpers
+│  └─ updater.py                   # GitHub update checker
 ├─ ui/
-│  ├─ __init__.py
-│  ├─ main_window.py             # Qt UI, A–B loop, tempo, segment management
-│  └─ segment_list_widget.py     # Segment list widget (Qt)
-└─ docs/
+│  ├─ main_window.py               # Main Qt window
+│  ├─ waveform_widget.py           # Waveform display widget
+│  ├─ segment_list_widget.py       # Segment list widget
+│  ├─ practice_panel.py            # Practice session control panel
+│  ├─ settings_dialog.py           # Preferences dialog
+│  └─ history_dialog.py            # Practice history viewer
+├─ tests/                          # pytest test suite (100 % coverage target)
+└─ docs/                           # Sphinx documentation source
    ├─ conf.py
    ├─ index.rst
    └─ source/
-      ├─ modules.rst
       ├─ core.rst
       ├─ infra.rst
       ├─ ui.rst
-      └─ app.rst
+      └─ ...
+```
+
+---
+
+## Running the Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest tests/ --ignore=tests/test_app.py --cov --cov-report=term-missing
 ```
 
 ---
 
 ## Documentation (Sphinx)
 
-The code is written with Sphinx-style docstrings (module metadata, parameters, returns, etc.), which makes it easy to generate HTML documentation.
-
-Typical steps from the project root:
-
 ```bash
 bopenv\Scripts\activate.bat
 cd docs
 .\make.bat html
+# Open docs/_build/html/index.html
 ```
-
-The generated HTML documentation is available under:
-
-```text
-docs/_build/html/index.html
-```
-
----
-
-## Known Limitations
-
-- **Tempo control**: the current implementation adjusts the playback position tracking but does not apply real-time audio time-stretching. True pitch-preserving tempo change (e.g. via `pyrubberband`) is planned for a future release.
-- **Volume during playback**: volume changes take effect from the next playback start, not instantly mid-stream.
-
----
-
-## Future Work
-
-Planned or possible enhancements include:
-
-- **True time-stretching** (pitch-preserving tempo change via `pyrubberband` or similar).
-- **Real-time volume control** during playback.
-- **Export segment as separate audio file** using `soundfile`.
-- **More keyboard shortcuts** for segment navigation.
-- **Additional status announcements** for critical events.
 
 ---
 
 ## Release History
 
-- **v0.3.0** *(current)*
-  - Replaced VLC with a native audio engine (librosa + sounddevice) — no VLC required.
-  - Added named segment management (save, list, jump, delete).
-  - Added tempo control slider (50%–200%).
-  - Added practice configuration export/import (`.bop` files).
-  - New Qt widget: `SegmentListWidget`.
-  - New keyboard shortcuts: Ctrl+Shift+S, Ctrl+E, Ctrl+I.
+### v1.1.1 *(current)*
+- Practice history: session logging (file, duration, loops, tempo) with table view and CSV export.
+- Progressive tempo: practice panel with configurable start/step/target, loop count, and loop delay.
+- Waveform display: interactive RMS waveform with playhead, A/B markers, and segment tick marks; click to seek.
+- Pitch control: ±12 semitone shift independent of tempo.
+- Pitch-preserving tempo: optional time-stretching via librosa.
+- Segment enhancements: categories, colours, notes, move-up/down reordering.
+- Segment export to WAV (16-bit) and MP3.
+- Undo / redo for segment add and delete (Ctrl+Z / Ctrl+Y).
+- Bilingual UI: French and English, switchable at runtime.
+- Themes: default, dark, and high-contrast.
+- Settings dialog: shortcut customisation, theme, accessibility (announce interval), audio options.
+- Recent files menu.
+- Background update checker (GitHub releases).
+- Async audio loading (non-blocking UI during decode).
 
-- **v1.0.0**
-  First stable release of Back-Office Player (BOP):
-  - Accessible Qt-based UI (keyboard + screen reader friendly).
-  - A–B loop practice.
-  - Position navigation with arrow keys.
-  - Sphinx documentation.
-  - PyInstaller Windows executable.
+### v1.0.0
+- First stable release.
+- Accessible Qt UI (keyboard + screen reader).
+- A–B loop practice with continuous looping.
+- Named segments: save, list, jump, delete.
+- Tempo control (50–200 %).
+- Export / import practice configurations (`.bop` files).
+- Position slider with arrow-key navigation.
+- Sphinx documentation and PyInstaller Windows executable.
 
-- **v0.2.0**
-  Internal development version (not publicly distributed).
+### v0.3.0
+- Replaced VLC with native audio engine (librosa + sounddevice).
+- Named segment management.
+- Tempo slider.
+- Practice config export/import (`.bop` files).
 
 ---
 
 ## Contributing
 
-Contributions are welcome as long as they respect:
+Contributions are welcome provided they respect:
 
-- The project's accessibility goals (keyboard / screen-reader first).
-- The modular architecture (separating core, infra, and UI).
-- The existing coding style and documentation format.
+- **Accessibility first** — keyboard and screen-reader support must be maintained.
+- **Layered architecture** — keep `core/`, `infra/`, and `ui/` concerns separate.
+- **Test coverage** — new code should include tests; the suite targets 100 % coverage.
+- **English docstrings** — all code documentation is in English.
 
 Before submitting a pull request:
 
-1. Make sure the code runs without errors on Windows.
-2. Keep docstrings and comments in English.
-3. Update or add Sphinx-style docstrings for new modules and functions.
+1. Run `pytest tests/ --ignore=tests/test_app.py` and ensure all tests pass.
+2. Add or update Sphinx docstrings for any new public API.
+3. Update this README and the release history if the change is user-facing.
 
 ---
 
 ## License
 
-This project is licensed under the **Apache License 2.0**.
+Apache License 2.0 — Copyright (c) 2025 BLIND SYSTEMS.
 
-```text
-Copyright (c) 2025 BLIND SYSTEMS
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-```
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+See [LICENSE](LICENSE) or https://www.apache.org/licenses/LICENSE-2.0.

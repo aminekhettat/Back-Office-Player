@@ -42,6 +42,24 @@ core.segment\_manager module
    :show-inheritance:
    :undoc-members:
 
+core.audio\_loader module
+--------------------------
+
+.. automodule:: core.audio_loader
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+core.commands module
+---------------------
+
+.. automodule:: core.commands
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 core.audio\_player module (Legacy — VLC-based)
 -----------------------------------------------
 

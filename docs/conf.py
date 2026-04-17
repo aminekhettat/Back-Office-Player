@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'Back-Office Player'
 copyright = '2025, BLIND SYSTEMS'
 author = 'Amine KHETTAT'
-release = '0.3.0'
+release = '1.1.1'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

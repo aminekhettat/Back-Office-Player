@@ -15,7 +15,7 @@ Features
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2025-12-02
-:version: 1.1.1
+:version: 1.1.2
 """
 
 from __future__ import annotations

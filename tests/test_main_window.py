@@ -43,6 +43,7 @@ def _make_window(qtbot, tmp_path, settings_path, monkeypatch, audio_player=None)
         audio_player.get_tempo.return_value = 1.0
         audio_player.get_pitch_semitones.return_value = 0.0
         audio_player.get_pitch_preserving.return_value = False
+        audio_player.is_playing.return_value = False
         audio_player._audio_data = None
         audio_player._sample_rate = 0
         audio_player._lock = threading.RLock()
@@ -224,6 +225,67 @@ class TestPlaybackControls:
         w.on_stop()
         assert "Stopped" in w.lbl_status.text()
 
+    def test_play_pause_toggle_plays_when_stopped(self, window):
+        """on_play_pause_toggle() plays when not currently playing."""
+        w, player = window
+        w._playing = False
+        w.on_play_pause_toggle()
+        player.play.assert_called()
+
+    def test_play_pause_toggle_pauses_when_playing(self, window):
+        """on_play_pause_toggle() pauses when already playing."""
+        w, player = window
+        w._playing = True
+        w.on_play_pause_toggle()
+        player.pause.assert_called_once()
+
+    def test_on_play_sets_playing_flag(self, window):
+        """on_play() sets _playing=True and updates button label."""
+        w, _ = window
+        w.on_play()
+        assert w._playing is True
+
+    def test_on_pause_clears_playing_flag(self, window):
+        """on_pause() sets _playing=False and updates button label."""
+        w, _ = window
+        w._playing = True
+        w.on_pause()
+        assert w._playing is False
+
+    def test_on_stop_clears_playing_flag(self, window):
+        """on_stop() sets _playing=False."""
+        w, _ = window
+        w._playing = True
+        w.on_stop()
+        assert w._playing is False
+
+    def test_on_toggle_loop(self, window):
+        """on_toggle_loop() toggles the loop checkbox."""
+        w, _ = window
+        initial = w.chk_loop.isChecked()
+        w.on_toggle_loop()
+        assert w.chk_loop.isChecked() == (not initial)
+        w.on_toggle_loop()
+        assert w.chk_loop.isChecked() == initial
+
+    def test_play_no_progressive_tempo_keeps_slider(self, window):
+        """on_play() does NOT reset tempo slider when progressive tempo is off."""
+        w, player = window
+        w.slider_tempo.setValue(130)
+        w.on_play()
+        assert w.slider_tempo.value() == 130
+
+    def test_play_with_progressive_tempo_resets_slider(self, window):
+        """on_play() resets tempo slider to session start value when progressive."""
+        w, player = window
+        w.slider_tempo.setValue(130)
+        # Configure progressive mode in the practice panel
+        w.practice_panel.chk_progressive.setChecked(True)
+        w.practice_panel.spn_tempo_start.setValue(0.75)
+        w.on_play()
+        # Slider should be reset to 75% by the session
+        assert w.slider_tempo.value() == 75
+
 
 # ---------------------------------------------------------------------------
 # Volume / Seek
@@ -314,6 +376,13 @@ class TestTempoPitch:
         w.on_tempo_change(150)
         player.set_tempo.assert_called_with(1.5)
         assert "150%" in w.lbl_tempo_value.text()
+
+    def test_on_tempo_change_saves_last_tempo(self, window):
+        """on_tempo_change persists last_tempo in settings."""
+        w, player = window
+        player.get_pitch_preserving.return_value = False
+        w.on_tempo_change(120)
+        assert w.settings.get("last_tempo") == 120
 
     def test_on_tempo_change_with_pitch_preserving(self, window):
         """on_tempo_change schedules apply_pitch_async when pitch-preserving."""

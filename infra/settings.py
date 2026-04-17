@@ -15,7 +15,7 @@ Features
 :organization: BLIND SYSTEMS
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
-:version: 1.1.1
+:version: 1.1.2
 """
 
 from __future__ import annotations
@@ -45,6 +45,7 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "position_announce_interval": 5,
     "shortcuts": {
         "open": "Ctrl+O",
+        "play_pause": "Space",
         "play": "Ctrl+P",
         "pause": "Ctrl+Shift+P",
         "stop": "Ctrl+S",
@@ -55,6 +56,13 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
         "import_config": "Ctrl+I",
         "next_segment": "Ctrl+Right",
         "prev_segment": "Ctrl+Left",
+        "volume_up": "Ctrl+Alt+Up",
+        "volume_down": "Ctrl+Alt+Down",
+        "tempo_up": "Ctrl+Up",
+        "tempo_down": "Ctrl+Down",
+        "pitch_up": "Shift+Up",
+        "pitch_down": "Shift+Down",
+        "toggle_loop": "Ctrl+L",
     },
 }
 

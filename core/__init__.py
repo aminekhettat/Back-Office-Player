@@ -14,5 +14,5 @@ These modules do not depend on the user interface (Tkinter).
 :cite: BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2025-12-02
-:version: 1.1.1
+:version: 1.1.2
 """

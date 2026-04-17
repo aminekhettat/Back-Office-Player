@@ -1,14 +1,14 @@
 """
-Chargement audio asynchrone.
+Asynchronous audio loader.
 
-Ce module fournit un QThread qui charge un fichier audio en arrière-plan
-afin de ne pas bloquer l'interface graphique pendant le décodage.
+Provides a QThread that loads an audio file in the background so that
+the GUI remains responsive during decoding.
 
 :author: Amine Khettat
 :organization: BLIND SYSTEMS
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
-:version: 1.1.1
+:version: 1.1.2
 """
 
 from __future__ import annotations

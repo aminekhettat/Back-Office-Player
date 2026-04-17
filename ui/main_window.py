@@ -142,6 +142,9 @@ class MainWindowQt(QMainWindow):
         self._loader_thread: Optional[AudioLoaderThread] = None
         self._command_history = CommandHistory()
         self._save_settings_timer: Optional[QTimer] = None  # created in _configure_timer
+        self._pitch_debounce_timer: Optional[QTimer] = None  # created in _configure_timer
+        self._tempo_debounce_timer: Optional[QTimer] = None  # created in _configure_timer
+        self._playing: bool = False  # track play state for toggle button
 
         self._build_ui()
         self._build_menu_bar()
@@ -188,9 +191,7 @@ class MainWindowQt(QMainWindow):
         # ── Row 1: playback controls + volume ─────────────────────────
         controls_layout = QHBoxLayout()
         self.btn_play = QPushButton()
-        self.btn_play.clicked.connect(self.on_play)
-        self.btn_pause = QPushButton()
-        self.btn_pause.clicked.connect(self.on_pause)
+        self.btn_play.clicked.connect(self.on_play_pause_toggle)
         self.btn_stop = QPushButton()
         self.btn_stop.clicked.connect(self.on_stop)
         self.lbl_volume = QLabel()
@@ -200,7 +201,6 @@ class MainWindowQt(QMainWindow):
         self.slider_volume.setAccessibleName("Curseur de volume")
         self.slider_volume.valueChanged.connect(self.on_volume_change)
         controls_layout.addWidget(self.btn_play)
-        controls_layout.addWidget(self.btn_pause)
         controls_layout.addWidget(self.btn_stop)
         controls_layout.addWidget(self.lbl_volume)
         controls_layout.addWidget(self.slider_volume)
@@ -361,8 +361,7 @@ class MainWindowQt(QMainWindow):
 
         # Tab order: transport controls first, then sliders, then segment tools
         QWidget.setTabOrder(self.btn_open, self.btn_play)
-        QWidget.setTabOrder(self.btn_play, self.btn_pause)
-        QWidget.setTabOrder(self.btn_pause, self.btn_stop)
+        QWidget.setTabOrder(self.btn_play, self.btn_stop)
         QWidget.setTabOrder(self.btn_stop, self.slider_volume)
         QWidget.setTabOrder(self.slider_volume, self.slider_tempo)
         QWidget.setTabOrder(self.slider_tempo, self.slider_pitch)
@@ -397,18 +396,7 @@ class MainWindowQt(QMainWindow):
         )
         self.lbl_file.setText(tr("lbl_no_file"))
 
-        self.btn_play.setText(tr("btn_play"))
-        self.btn_play.setAccessibleName(tr("btn_play"))
-        self.btn_play.setAccessibleDescription(
-            "Démarrer la lecture audio." if get_language() == "fr"
-            else "Start audio playback."
-        )
-        self.btn_pause.setText(tr("btn_pause"))
-        self.btn_pause.setAccessibleName(tr("btn_pause"))
-        self.btn_pause.setAccessibleDescription(
-            "Mettre la lecture en pause." if get_language() == "fr"
-            else "Pause audio playback."
-        )
+        self._update_play_pause_button()
         self.btn_stop.setText(tr("btn_stop"))
         self.btn_stop.setAccessibleName(tr("btn_stop"))
         self.btn_stop.setAccessibleDescription(
@@ -605,6 +593,7 @@ class MainWindowQt(QMainWindow):
         sc_cfg: dict = self.settings.get("shortcuts", {})
         bindings = {
             "open": self.on_open_file,
+            "play_pause": self.on_play_pause_toggle,
             "play": self.on_play,
             "pause": self.on_pause,
             "stop": self.on_stop,
@@ -615,6 +604,25 @@ class MainWindowQt(QMainWindow):
             "import_config": self.on_import_config,
             "next_segment": self.on_next_segment,
             "prev_segment": self.on_prev_segment,
+            "volume_up": lambda: self.slider_volume.setValue(
+                min(100, self.slider_volume.value() + 5)
+            ),
+            "volume_down": lambda: self.slider_volume.setValue(
+                max(0, self.slider_volume.value() - 5)
+            ),
+            "tempo_up": lambda: self.slider_tempo.setValue(
+                min(200, self.slider_tempo.value() + 5)
+            ),
+            "tempo_down": lambda: self.slider_tempo.setValue(
+                max(50, self.slider_tempo.value() - 5)
+            ),
+            "pitch_up": lambda: self.slider_pitch.setValue(
+                min(12, self.slider_pitch.value() + 1)
+            ),
+            "pitch_down": lambda: self.slider_pitch.setValue(
+                max(-12, self.slider_pitch.value() - 1)
+            ),
+            "toggle_loop": self.on_toggle_loop,
         }
         for action, slot in bindings.items():
             key_str = sc_cfg.get(action, "")
@@ -650,6 +658,27 @@ class MainWindowQt(QMainWindow):
         self._save_settings_timer.timeout.connect(
             lambda: save_settings(self.settings)
         )
+
+        # Pitch debounce: apply pitch shift 150 ms after the last slider move.
+        self._pitch_debounce_timer = QTimer(self)
+        self._pitch_debounce_timer.setSingleShot(True)
+        self._pitch_debounce_timer.setInterval(150)
+        self._pitch_debounce_timer.timeout.connect(
+            lambda: self.audio_player.apply_pitch_async(
+                lambda: QTimer.singleShot(0, lambda: None)
+            )
+        )
+
+        # Tempo debounce: re-process audio in pitch-preserving mode.
+        self._tempo_debounce_timer = QTimer(self)
+        self._tempo_debounce_timer.setSingleShot(True)
+        self._tempo_debounce_timer.setInterval(150)
+        self._tempo_debounce_timer.timeout.connect(
+            lambda: self.audio_player.apply_pitch_async(
+                lambda: QTimer.singleShot(0, lambda: None)
+            )
+        )
+
         self.timer.start()
 
     # ================================================================== #
@@ -698,7 +727,7 @@ class MainWindowQt(QMainWindow):
     def _set_ui_enabled(self, enabled: bool) -> None:
         """Active ou désactive les contrôles principaux de l'UI."""
         for widget in (
-            self.btn_play, self.btn_pause, self.btn_stop,
+            self.btn_play, self.btn_stop,
             self.slider_volume, self.slider_position,
             self.slider_tempo, self.slider_pitch,
             self.btn_set_a, self.btn_set_b, self.btn_clear_ab,
@@ -747,28 +776,64 @@ class MainWindowQt(QMainWindow):
             f"Impossible de charger le fichier :\n{message}"
         )
 
+    def on_play_pause_toggle(self) -> None:
+        """Toggle playback: play if paused/stopped, pause if playing."""
+        if self._playing:
+            self.on_pause()
+        else:
+            self.on_play()
+
     def on_play(self) -> None:
         """Start or resume playback; start a practice session if none active."""
         if self.practice_panel.get_active_session() is None:
             session = self.practice_panel.start_session()
             self._session_loop_count = 0
             self._session_tempo_sum = session.current_tempo
-            # Apply initial tempo from session
-            self.slider_tempo.setValue(int(session.current_tempo * 100))
+            # Only apply the session start tempo when progressive mode is enabled;
+            # otherwise keep the current user-set slider value.
+            if session.progressive_tempo:
+                self.slider_tempo.setValue(int(session.current_tempo * 100))
         self.audio_player.play()
+        self._playing = True
         self.lbl_status.setText(tr("status_playing"))
+        self._update_play_pause_button()
 
     def on_pause(self) -> None:
         """Pause playback."""
         self.audio_player.pause()
+        self._playing = False
         self.lbl_status.setText(tr("status_paused"))
+        self._update_play_pause_button()
 
     def on_stop(self) -> None:
         """Stop playback and save practice history."""
         self.audio_player.stop()
+        self._playing = False
         self._save_practice_history()
         self.practice_panel.stop_session()
         self.lbl_status.setText(tr("status_stopped"))
+        self._update_play_pause_button()
+
+    def on_toggle_loop(self) -> None:
+        """Toggle A–B loop on/off."""
+        self.chk_loop.setChecked(not self.chk_loop.isChecked())
+
+    def _update_play_pause_button(self) -> None:
+        """Update the play/pause toggle button label to reflect current state."""
+        if self._playing:
+            self.btn_play.setText(tr("btn_pause"))
+            self.btn_play.setAccessibleName(tr("btn_pause"))
+            self.btn_play.setAccessibleDescription(
+                "Mettre la lecture en pause." if get_language() == "fr"
+                else "Pause audio playback."
+            )
+        else:
+            self.btn_play.setText(tr("btn_play"))
+            self.btn_play.setAccessibleName(tr("btn_play"))
+            self.btn_play.setAccessibleDescription(
+                "Démarrer ou reprendre la lecture audio." if get_language() == "fr"
+                else "Start or resume audio playback."
+            )
 
     def on_volume_change(self, value: int) -> None:
         self.audio_player.set_volume(int(value))
@@ -786,14 +851,21 @@ class MainWindowQt(QMainWindow):
             f"{self._format_time(value)} / {self._format_time(duration)}"
         )
         self.slider_position.setAccessibleDescription(announce_text)
+        # Dynamically update the name so the formatted time is read when
+        # focus lands on the slider (in addition to the live announcement).
+        self.slider_position.setAccessibleName(
+            f"{tr('lbl_position').rstrip(':')} : {announce_text}"
+        )
         try:
+            # Assertive priority pre-empts the raw integer ValueChange event
+            # announced by the AT, replacing it with the formatted time.
             QAccessible.announce(
                 self.slider_position,
-                QAccessible.AnnouncementPriority.Polite,
+                QAccessible.AnnouncementPriority.Assertive,
                 announce_text,
             )
         except AttributeError:
-            pass  # Qt < 6.8: description updated above is the fallback
+            pass  # Qt < 6.8: description + name update above is the fallback
 
     def _on_waveform_seek(self, seconds: float) -> None:
         """Seek triggered by clicking on the waveform widget."""
@@ -833,27 +905,21 @@ class MainWindowQt(QMainWindow):
         percentage = value / 100.0
         self.audio_player.set_tempo(percentage)
         self.lbl_tempo_value.setText(f"{value}%")
-
-        # If pitch-preserving, reprocess audio in background
+        # Persist the tempo so it survives app restart.
+        self.settings["last_tempo"] = value
+        self._save_settings_timer.start()
+        # If pitch-preserving, reprocess audio after debounce.
         if self.audio_player.get_pitch_preserving():
-            QTimer.singleShot(
-                0,
-                lambda: self.audio_player.apply_pitch_async(
-                    lambda: QTimer.singleShot(0, lambda: None)
-                ),
-            )
+            self._tempo_debounce_timer.start()
 
     def on_pitch_change(self, value: int) -> None:
-        """Pitch slider moved — apply shift asynchronously."""
+        """Pitch slider moved — apply shift after debounce."""
         self._pitch_semitones = float(value)
         self.lbl_pitch_value.setText(f"{value:+d} st")
         self.audio_player.set_pitch_semitones(float(value))
-        QTimer.singleShot(
-            200,
-            lambda: self.audio_player.apply_pitch_async(
-                lambda: QTimer.singleShot(0, lambda: None)
-            ),
-        )
+        # Restart debounce timer so we fire only once after the user stops
+        # moving the slider (prevents concurrent pitch-shift threads).
+        self._pitch_debounce_timer.start()
 
     def on_segment_selected(self, segment: Segment) -> None:
         """
@@ -1157,9 +1223,9 @@ class MainWindowQt(QMainWindow):
         self.settings["language"] = lang
         save_settings(self.settings)
 
-        # Update checkmarks
-        self.act_lang_fr.setChecked(lang == "fr")
-        self.act_lang_en.setChecked(lang == "en")
+        # Rebuild menu bar so all menu item labels are in the new language.
+        self.menuBar().clear()
+        self._build_menu_bar()
 
         # Retranslate this window and its children
         self.retranslate_ui()
@@ -1200,6 +1266,12 @@ class MainWindowQt(QMainWindow):
         accessible_value = f"{pos_str} sur {dur_str}"
         self.slider_position.setToolTip(accessible_value)
         self.slider_position.setAccessibleDescription(accessible_value)
+
+        # Sync play/pause button with actual player state (e.g. natural end of track).
+        actual_playing = self.audio_player.is_playing()
+        if self._playing != actual_playing:
+            self._playing = actual_playing
+            self._update_play_pause_button()
 
         # Waveform playhead
         self.waveform_widget.set_position(current_pos)

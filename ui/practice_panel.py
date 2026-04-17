@@ -8,7 +8,7 @@ a session timer to the user.
 :organization: BLIND SYSTEMS
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
-:version: 1.1.1
+:version: 1.1.2
 """
 
 from __future__ import annotations
@@ -130,7 +130,7 @@ class PracticePanel(QGroupBox):
         self.spn_tempo_start = QDoubleSpinBox()
         self.spn_tempo_start.setRange(0.25, 2.0)
         self.spn_tempo_start.setSingleStep(0.05)
-        self.spn_tempo_start.setValue(0.75)
+        self.spn_tempo_start.setValue(1.0)
         self.spn_tempo_start.setAccessibleName("Valeur tempo de départ")
         self.spn_tempo_start.setAccessibleDescription(
             "Facteur de tempo initial en mode progressif (ex. 0,75 = 75 %)."
