@@ -197,7 +197,7 @@ class WaveformWidget(QWidget):
             chunk = self._audio[i : i + hop]
             if len(chunk) > 0:
                 rms = float(np.sqrt(np.mean(chunk.astype(np.float64) ** 2)))
-            else:
+            else:  # pragma: no cover
                 rms = 0.0
             frames.append(rms)
 

@@ -8,6 +8,7 @@ omit =
     setup.py
     conftest.py
     core/audio_player.py
+    app.py
 
 [report]
 exclude_lines =

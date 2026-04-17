@@ -21,11 +21,14 @@ Features
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 from pathlib import Path
 from typing import Any, Dict, List
 
 from platformdirs import user_data_dir
+
+_logger = logging.getLogger(__name__)
 
 # Default application settings.
 DEFAULT_SETTINGS: Dict[str, Any] = {
@@ -150,7 +153,7 @@ def save_settings(settings: Dict[str, Any]) -> None:
         with path.open("w", encoding="utf-8") as f:
             json.dump(settings, f, ensure_ascii=False, indent=2)
     except Exception as exc:
-        print(f"Error while saving settings: {exc}")
+        _logger.error("Error while saving settings: %s", exc)
 
 
 def add_recent_file(

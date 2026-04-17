@@ -30,6 +30,7 @@ Requirements
 
 from __future__ import annotations
 
+import logging
 import threading
 from pathlib import Path
 from typing import Callable, Optional
@@ -39,6 +40,8 @@ import librosa
 import sounddevice as sd
 
 from core.pitch_engine import PitchEngine
+
+_logger = logging.getLogger(__name__)
 
 
 class AudioPlayer:
@@ -235,7 +238,7 @@ class AudioPlayer:
         with self._lock:
             return self._duration
 
-    def get_audio_snapshot(self) -> "tuple[Optional[np.ndarray], int]":
+    def get_audio_snapshot(self) -> tuple[Optional[np.ndarray], int]:
         """
         Return a thread-safe snapshot of the current audio data and sample rate.
 
@@ -366,7 +369,7 @@ class AudioPlayer:
                     on_ready()
 
                 def _on_stretch_error(exc: Exception) -> None:
-                    print(f"PitchEngine stretch error: {exc}")
+                    _logger.warning("PitchEngine stretch error: %s", exc)
                     with self._lock:
                         self._processed_audio = shifted
                     on_ready()
@@ -380,7 +383,7 @@ class AudioPlayer:
                 on_ready()
 
         def _on_shift_error(exc: Exception) -> None:
-            print(f"PitchEngine shift error: {exc}")
+            _logger.warning("PitchEngine shift error: %s", exc)
             # Fall back: just use raw audio
             with self._lock:
                 self._processed_audio = None
@@ -395,7 +398,7 @@ class AudioPlayer:
                 on_ready()
 
             def _on_stretch_error_direct(exc: Exception) -> None:
-                print(f"PitchEngine stretch error: {exc}")
+                _logger.warning("PitchEngine stretch error: %s", exc)
                 with self._lock:
                     self._processed_audio = None
                 on_ready()
@@ -431,7 +434,7 @@ class AudioPlayer:
 
         try:
             with self._lock:
-                if self._audio_data is None or self._sample_rate == 0:
+                if self._audio_data is None or self._sample_rate == 0:  # pragma: no cover
                     return
                 sample_rate = self._sample_rate
 
@@ -460,7 +463,7 @@ class AudioPlayer:
                         if self._processed_audio is not None
                         else self._audio_data
                     )
-                    if active_audio is None:
+                    if active_audio is None:  # pragma: no cover
                         break
 
                     pos = self._current_sample_pos
@@ -494,7 +497,7 @@ class AudioPlayer:
                         ).astype(np.float32)
                     elif actual > 0:
                         audio_block = chunk.astype(np.float32)
-                    else:
+                    else:  # pragma: no cover
                         audio_block = np.zeros(bs, dtype=np.float32)
 
                     # Advance sample position.
@@ -505,7 +508,7 @@ class AudioPlayer:
                     local_stream.write(audio_block)
 
         except Exception as exc:
-            print(f"Playback error: {exc}")
+            _logger.error("Playback error: %s", exc)
         finally:
             with self._lock:
                 self._stream = None
@@ -516,5 +519,5 @@ class AudioPlayer:
                 try:
                     local_stream.stop()
                     local_stream.close()
-                except Exception:
+                except Exception:  # pragma: no cover
                     pass

@@ -15,10 +15,15 @@ from __future__ import annotations
 
 import csv
 import json
+import logging
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
+
+from platformdirs import user_data_dir
+
+_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -77,7 +82,6 @@ class PracticeHistory:
 
     def __init__(self, data_dir: Optional[Path] = None) -> None:
         if data_dir is None:
-            from platformdirs import user_data_dir
             data_dir = Path(user_data_dir("BOP", "BLINDSYSTEMS"))
         self._path = data_dir / "practice_history.json"
 
@@ -123,7 +127,7 @@ class PracticeHistory:
                     indent=2,
                 )
         except Exception as exc:
-            print(f"Error saving practice history: {exc}")
+            _logger.error("Error saving practice history: %s", exc)
 
     # ------------------------------------------------------------------ #
     # Export

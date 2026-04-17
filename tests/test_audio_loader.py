@@ -92,3 +92,27 @@ class TestAudioLoaderThreadError:
 
         assert isinstance(blocker.args[0], str)
         assert "bad format" in blocker.args[0]
+
+
+# ---------------------------------------------------------------------------
+# Direct run() calls — ensures coverage tracks the thread code
+# ---------------------------------------------------------------------------
+
+class TestAudioLoaderRunDirect:
+    def test_run_success_emits_loaded(self, qtbot, mock_player, audio_path):
+        """run() called synchronously emits loaded on success."""
+        mock_player.load_file.return_value = None
+        thread = AudioLoaderThread(mock_player, audio_path)
+        received: list[str] = []
+        thread.loaded.connect(lambda: received.append("ok"))
+        thread.run()
+        assert received == ["ok"]
+
+    def test_run_error_emits_error(self, qtbot, mock_player, audio_path):
+        """run() called synchronously emits error on failure."""
+        mock_player.load_file.side_effect = RuntimeError("bad codec")
+        thread = AudioLoaderThread(mock_player, audio_path)
+        errors: list[str] = []
+        thread.error.connect(errors.append)
+        thread.run()
+        assert errors == ["bad codec"]

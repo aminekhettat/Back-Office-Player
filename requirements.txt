@@ -1,10 +1,12 @@
-#Install instruction: pip install -r requirements.txt
+# Runtime dependencies only.
+# Install with: pip install -r requirements.txt
+#
+# For development tools (testing, linting, packaging, docs), use:
+#   pip install -r requirements-dev.txt
 
-pyinstaller
 librosa>=0.10.0
 sounddevice>=0.4.5
 numpy>=1.20.0
 scipy>=1.7.0
-sphinx
-sphinx-rtd-theme
 PySide6
+platformdirs>=3.0.0

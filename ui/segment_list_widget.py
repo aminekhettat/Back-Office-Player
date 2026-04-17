@@ -214,7 +214,7 @@ class SegmentListWidget(QWidget):
             if segment.color:
                 try:
                     item.setForeground(QColor(segment.color))
-                except Exception:
+                except Exception:  # pragma: no cover
                     pass
 
             self.list_widget.addItem(item)

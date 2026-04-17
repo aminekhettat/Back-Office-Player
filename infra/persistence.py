@@ -18,10 +18,13 @@ the original audio file name.
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Optional
 
 from core.segment_manager import SegmentManager
+
+_logger = logging.getLogger(__name__)
 
 
 def get_metadata_path(audio_file_path: Optional[Path]) -> Optional[Path]:
@@ -110,8 +113,7 @@ def save_segments(audio_file_path: Optional[Path], manager: SegmentManager) -> N
         with meta_path.open("w", encoding="utf-8") as f:
             json.dump(manager.to_dict(), f, ensure_ascii=False, indent=2)
     except Exception as exc:
-        # In a real application, you would use logging instead of print.
-        print(f"Error while saving segments: {exc}")
+        _logger.error("Error while saving segments: %s", exc)
 
 
 def export_segments_text(

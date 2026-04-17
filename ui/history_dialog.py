@@ -127,6 +127,7 @@ class HistoryDialog(QDialog):
     def _populate(self) -> None:
         """Load history entries into the table."""
         sessions = self._history.get_sessions()
+        self.table.setSortingEnabled(False)
         self.table.setRowCount(len(sessions))
 
         total_loops = 0
@@ -156,6 +157,7 @@ class HistoryDialog(QDialog):
             total_duration += entry.duration_seconds
 
         self.table.resizeColumnsToContents()
+        self.table.setSortingEnabled(True)
 
         # Summary
         n = len(sessions)

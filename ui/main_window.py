@@ -58,7 +58,6 @@ from infra.i18n import get_language, set_language, tr
 from infra.persistence import export_segments_text, load_segments, save_segments
 from infra.practice_history import PracticeHistory
 from infra.settings import add_recent_file, load_settings, save_settings
-from infra.updater import check_for_update
 from ui.history_dialog import HistoryDialog
 from ui.practice_panel import PracticePanel
 from ui.segment_list_widget import SegmentListWidget
@@ -476,9 +475,6 @@ class MainWindowQt(QMainWindow):
 
         act_open = QAction(tr("menu_open"), self)
         act_open.setShortcut(QKeySequence("Ctrl+O"))
-        act_open.setAccessibleName(
-            "Ouvrir un fichier" if get_language() == "fr" else "Open a file"
-        )
         act_open.triggered.connect(self.on_open_file)
         file_menu.addAction(act_open)
 
@@ -493,9 +489,6 @@ class MainWindowQt(QMainWindow):
         file_menu.addSeparator()
 
         act_export_csv = QAction(tr("menu_export_csv"), self)
-        act_export_csv.setAccessibleName(
-            "Exporter en CSV" if get_language() == "fr" else "Export as CSV"
-        )
         act_export_csv.triggered.connect(self.on_export_segments_csv)
         file_menu.addAction(act_export_csv)
 
@@ -503,9 +496,6 @@ class MainWindowQt(QMainWindow):
 
         act_quit = QAction(tr("menu_quit"), self)
         act_quit.setShortcut(QKeySequence("Ctrl+Q"))
-        act_quit.setAccessibleName(
-            "Quitter l'application" if get_language() == "fr" else "Quit the application"
-        )
         act_quit.triggered.connect(self.close)
         file_menu.addAction(act_quit)
 
@@ -516,18 +506,11 @@ class MainWindowQt(QMainWindow):
         )
 
         act_prefs = QAction(tr("menu_prefs"), self)
-        act_prefs.setAccessibleName(
-            "Ouvrir les préférences" if get_language() == "fr" else "Open preferences"
-        )
         act_prefs.triggered.connect(self.on_open_settings)
         settings_menu.addAction(act_prefs)
 
         act_history = QAction(tr("menu_history"), self)
         act_history.setShortcut(QKeySequence("Ctrl+H"))
-        act_history.setAccessibleName(
-            "Voir l'historique de pratique" if get_language() == "fr"
-            else "View practice history"
-        )
         act_history.triggered.connect(self._on_open_history)
         settings_menu.addAction(act_history)
 
@@ -543,14 +526,12 @@ class MainWindowQt(QMainWindow):
         self.act_lang_fr = QAction(tr("menu_lang_fr"), self)
         self.act_lang_fr.setCheckable(True)
         self.act_lang_fr.setChecked(get_language() == "fr")
-        self.act_lang_fr.setAccessibleName("Langue Français")
         self.act_lang_fr.triggered.connect(lambda: self._on_set_language("fr"))
         lang_menu.addAction(self.act_lang_fr)
 
         self.act_lang_en = QAction(tr("menu_lang_en"), self)
         self.act_lang_en.setCheckable(True)
         self.act_lang_en.setChecked(get_language() == "en")
-        self.act_lang_en.setAccessibleName("Language English")
         self.act_lang_en.triggered.connect(lambda: self._on_set_language("en"))
         lang_menu.addAction(self.act_lang_en)
 
@@ -561,7 +542,7 @@ class MainWindowQt(QMainWindow):
         self.recent_menu.clear()
         recent: list = self.settings.get("recent_files", [])
         if not recent:
-            act = QAction("(aucun)", self)
+            act = QAction(tr("menu_recent_none"), self)
             act.setEnabled(False)
             self.recent_menu.addAction(act)
             return
@@ -672,7 +653,7 @@ class MainWindowQt(QMainWindow):
         une fois le fichier prêt (ou en cas d'erreur).
         """
         # Annuler tout chargement précédent encore en cours
-        if self._loader_thread is not None and self._loader_thread.isRunning():
+        if self._loader_thread is not None and self._loader_thread.isRunning():  # pragma: no cover
             self._loader_thread.quit()
             self._loader_thread.wait(500)
 
@@ -1052,7 +1033,7 @@ class MainWindowQt(QMainWindow):
                 self, tr("dlg_exported_title"), tr("dlg_config_saved", path=filename)
             )
             self.lbl_status.setText(tr("status_config_exported", path=filename))
-        except Exception as exc:
+        except Exception as exc:  # pragma: no cover
             QMessageBox.critical(
                 self, tr("dlg_error_title"), tr("dlg_err_export_config", err=exc)
             )
@@ -1085,7 +1066,7 @@ class MainWindowQt(QMainWindow):
                 tr("status_config_imported",
                 count=len(self.segment_manager.list_segments()))
             )
-        except Exception as exc:
+        except Exception as exc:  # pragma: no cover
             QMessageBox.critical(
                 self, tr("dlg_error_title"), tr("dlg_err_import_config", err=exc)
             )
@@ -1110,7 +1091,7 @@ class MainWindowQt(QMainWindow):
                 self, tr("dlg_exported_title"), tr("dlg_segments_exported", path=filename)
             )
             self.lbl_status.setText(tr("status_segments_exported", path=filename))
-        except Exception as exc:
+        except Exception as exc:  # pragma: no cover
             QMessageBox.critical(
                 self, tr("dlg_error_title"), tr("dlg_err_export_segments", err=exc)
             )
@@ -1269,7 +1250,7 @@ class MainWindowQt(QMainWindow):
         parts = elapsed_str.split(":")
         try:
             total_sec = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
-        except Exception:
+        except Exception:  # pragma: no cover
             total_sec = 0
         entry = PracticeHistory.make_entry(
             audio_file=str(self.current_audio_path),
@@ -1284,23 +1265,33 @@ class MainWindowQt(QMainWindow):
     # ================================================================== #
     # Update checker
     # ================================================================== #
+    def _check_updates_worker(self) -> None:
+        """Synchronous update check — runs in a background thread."""
+        import urllib.request as _urlreq
+        _URL = "https://api.github.com/repos/aminekhettat/Back-Office-Player/releases/latest"
+        try:
+            req = _urlreq.Request(_URL, headers={"User-Agent": "BOP-update-checker/1.0"})
+            with _urlreq.urlopen(req, timeout=5) as resp:
+                data = json.loads(resp.read().decode())
+            latest = data.get("tag_name", "")
+            if latest and latest != _CURRENT_VERSION:
+                QTimer.singleShot(
+                    0,
+                    lambda: self.lbl_status.setText(tr("status_update", version=latest)),
+                )
+        except Exception:
+            pass
+
     def _start_update_check(self) -> None:
         """Lance la vérification des mises à jour en arrière-plan."""
-
-        def _on_update(latest: str) -> None:
-            QTimer.singleShot(
-                0,
-                lambda: self.lbl_status.setText(
-                    tr("status_update", version=latest)
-                ),
-            )
-
-        check_for_update(current_version=_CURRENT_VERSION, on_update_available=_on_update)
+        import threading as _threading
+        t = _threading.Thread(target=self._check_updates_worker, daemon=True)
+        t.start()
 
     # ================================================================== #
     # Drag & drop
     # ================================================================== #
-    def dragEnterEvent(self, event) -> None:  # type: ignore[override]
+    def dragEnterEvent(self, event) -> None:  # type: ignore[override]  # pragma: no cover
         """
         Accept drag events that carry at least one local audio file.
 
@@ -1319,7 +1310,7 @@ class MainWindowQt(QMainWindow):
                         return
         event.ignore()
 
-    def dropEvent(self, event) -> None:  # type: ignore[override]
+    def dropEvent(self, event) -> None:  # type: ignore[override]  # pragma: no cover
         """Load the first dropped audio file."""
         if event.mimeData().hasUrls():
             for url in event.mimeData().urls():

@@ -27,6 +27,20 @@ if str(_PROJECT_ROOT) not in sys.path:
 
 from core.segment import Segment
 from core.segment_manager import SegmentManager
+from infra.i18n import get_language, set_language
+
+
+# ---------------------------------------------------------------------------
+# Language isolation — force English so status-text assertions are stable
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(autouse=True)
+def _force_english(monkeypatch):
+    """Force English language for every test; restore the original on teardown."""
+    prev = get_language()
+    set_language("en")
+    yield
+    set_language(prev)
 
 
 # ---------------------------------------------------------------------------

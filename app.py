@@ -14,6 +14,7 @@ Qt main window) and starts the Qt event loop.
 
 from __future__ import annotations
 
+import logging
 import sys
 
 from PySide6.QtWidgets import QApplication
@@ -33,6 +34,7 @@ def main() -> None:
 
     Steps
     -----
+    - Configure application-wide logging.
     - Create the Qt application.
     - Set the global application icon.
     - Create an :class:`AudioPlayer` instance.
@@ -40,6 +42,12 @@ def main() -> None:
     - Instantiate the :class:`MainWindowQt` with these objects.
     - Start the Qt main loop.
     """
+    logging.basicConfig(
+        level=logging.WARNING,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        handlers=[logging.StreamHandler(sys.stderr)],
+    )
+
     # Create the Qt application object.
     app = QApplication(sys.argv)
 

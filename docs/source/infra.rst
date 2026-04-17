@@ -1,8 +1,7 @@
 infra package
 =============
 
-This package contains infrastructure and persistence helpers for
-Back-Office Player (BOP).
+Infrastructure and persistence helpers for Back-Office Player (BOP).
 
 .. automodule:: infra
    :members:
@@ -23,6 +22,15 @@ Persistence
 -----------
 
 .. automodule:: infra.persistence
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Practice History
+----------------
+
+.. automodule:: infra.practice_history
    :members:
    :undoc-members:
    :show-inheritance:
