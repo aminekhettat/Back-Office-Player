@@ -20,7 +20,7 @@ Responsibilities
 :organization: BLIND SYSTEMS
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
-:version: 1.1.1
+:version: 1.1.2
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from PySide6.QtCore import QTimer, Qt
-from PySide6.QtGui import QAction, QIcon, QKeySequence, QShortcut
+from PySide6.QtGui import QAccessible, QAction, QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QCheckBox,
     QFileDialog,
@@ -779,6 +779,21 @@ class MainWindowQt(QMainWindow):
 
     def on_seek(self, value: int) -> None:
         self.audio_player.set_position(float(value))
+        # Announce the formatted time to screen readers so they speak
+        # "00:01:23" instead of the raw integer "83" from the slider range.
+        duration = self.audio_player.get_duration()
+        announce_text = (
+            f"{self._format_time(value)} / {self._format_time(duration)}"
+        )
+        self.slider_position.setAccessibleDescription(announce_text)
+        try:
+            QAccessible.announce(
+                self.slider_position,
+                QAccessible.AnnouncementPriority.Polite,
+                announce_text,
+            )
+        except AttributeError:
+            pass  # Qt < 6.8: description updated above is the fallback
 
     def _on_waveform_seek(self, seconds: float) -> None:
         """Seek triggered by clicking on the waveform widget."""
@@ -1354,8 +1369,13 @@ class MainWindowQt(QMainWindow):
     # ================================================================== #
     @staticmethod
     def _format_time(seconds: float) -> str:
-        """Format *seconds* as ``mm:ss``."""
+        """Format *seconds* as ``hh:mm:ss`` (or ``mm:ss`` when under one hour)."""
         if seconds < 0:
             seconds = 0.0
         total = int(seconds)
-        return f"{total // 60:02d}:{total % 60:02d}"
+        h = total // 3600
+        m = (total % 3600) // 60
+        s = total % 60
+        if h > 0:
+            return f"{h:02d}:{m:02d}:{s:02d}"
+        return f"{m:02d}:{s:02d}"

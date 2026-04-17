@@ -239,8 +239,17 @@ class TestVolumeAndSeek:
     def test_on_seek(self, window):
         """on_seek() calls set_position on the player."""
         w, player = window
+        player.get_duration.return_value = 120.0
         w.on_seek(30)
         player.set_position.assert_called_with(30.0)
+
+    def test_on_seek_updates_accessible_description(self, window):
+        """on_seek() updates the slider accessible description with formatted time."""
+        w, player = window
+        player.get_duration.return_value = 120.0
+        w.on_seek(65)
+        desc = w.slider_position.accessibleDescription()
+        assert "01:05" in desc  # 65 s = 1 min 5 s
 
 
 # ---------------------------------------------------------------------------
@@ -899,6 +908,11 @@ class TestFormatTime:
         """_format_time(45) returns '00:45'."""
         w, _ = window
         assert w._format_time(45.0) == "00:45"
+
+    def test_format_hours(self, window):
+        """_format_time for >= 1 hour returns hh:mm:ss."""
+        w, _ = window
+        assert w._format_time(3661.0) == "01:01:01"
 
 
 # ---------------------------------------------------------------------------
