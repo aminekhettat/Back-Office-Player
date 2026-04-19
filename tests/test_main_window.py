@@ -1288,6 +1288,42 @@ class TestTimeSliderAccessible:
 
 
 # ---------------------------------------------------------------------------
+# _time_slider_accessible_factory — accessibility interface factory
+# ---------------------------------------------------------------------------
+
+
+class TestTimeSliderAccessibleFactory:
+    def test_factory_returns_accessible_for_time_slider(self, qtbot):
+        """Factory returns a _TimeSliderAccessible for a TimeSlider instance."""
+        from ui.main_window import (
+            TimeSlider,
+            _TimeSliderAccessible,
+            _time_slider_accessible_factory,
+            _time_slider_accessibles,
+        )
+
+        slider = TimeSlider(Qt.Orientation.Horizontal)
+        qtbot.addWidget(slider)
+
+        before = len(_time_slider_accessibles)
+        iface = _time_slider_accessible_factory("QSlider", slider)
+        assert isinstance(iface, _TimeSliderAccessible)
+        # Strong reference is retained to prevent GC by Qt.
+        assert len(_time_slider_accessibles) == before + 1
+
+    def test_factory_returns_none_for_non_time_slider(self, qtbot):
+        """Factory returns None for widgets that are not TimeSlider."""
+        from PySide6.QtWidgets import QPushButton
+
+        from ui.main_window import _time_slider_accessible_factory
+
+        button = QPushButton()
+        qtbot.addWidget(button)
+
+        assert _time_slider_accessible_factory("QPushButton", button) is None
+
+
+# ---------------------------------------------------------------------------
 # _on_about — French and English dialogs
 # ---------------------------------------------------------------------------
 

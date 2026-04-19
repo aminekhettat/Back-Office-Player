@@ -44,6 +44,11 @@ autodoc_mock_imports = [
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+# Napoleon: render "Attributes" sections as :ivar: rather than :attribute:
+# so dataclass fields aren't re-documented by autodoc's :undoc-members: flag
+# (otherwise we get duplicate object description warnings).
+napoleon_use_ivar = True
+
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
