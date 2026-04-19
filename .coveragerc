@@ -12,8 +12,7 @@ omit =
 
 [report]
 exclude_lines =
-    # Standard pragma
-    pragma: no cover
+
     # Abstract methods
     raise NotImplementedError
     # __repr__ / __str__ boilerplate

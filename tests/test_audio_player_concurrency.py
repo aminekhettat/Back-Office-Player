@@ -23,7 +23,6 @@ import pytest
 
 from core.audio_player_native import AudioPlayer
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -63,7 +62,7 @@ class TestPlayPauseConcurrency:
                     for _ in range(15):
                         player.play()
                         player.pause()
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     errors.append(exc)
 
             threads = [threading.Thread(target=_toggle) for _ in range(4)]
@@ -88,7 +87,7 @@ class TestPlayPauseConcurrency:
             def _stop() -> None:
                 try:
                     player.stop()
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     errors.append(exc)
 
             threads = [threading.Thread(target=_stop) for _ in range(6)]
@@ -119,7 +118,7 @@ class TestSeekConcurrency:
             try:
                 for _ in range(20):
                     player.set_position(target)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 errors.append(exc)
 
         targets = [duration * frac for frac in [0.0, 0.25, 0.5, 0.75, 1.0]]
@@ -147,7 +146,7 @@ class TestSeekConcurrency:
                 try:
                     for i in range(30):
                         player.set_position(duration * (i % 5) / 5)
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     errors.append(exc)
 
             t = threading.Thread(target=_seek_loop)
@@ -175,7 +174,7 @@ class TestParameterConcurrency:
                     player.set_volume(v)
                     vol = player.get_volume()
                     assert 0 <= vol <= 100
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 errors.append(exc)
 
         threads = [
@@ -200,7 +199,7 @@ class TestParameterConcurrency:
                     player.set_tempo(f)
                     tempo = player.get_tempo()
                     assert 0.5 <= tempo <= 2.0
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 errors.append(exc)
 
         threads = [

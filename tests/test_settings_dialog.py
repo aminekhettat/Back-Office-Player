@@ -16,8 +16,7 @@ import copy
 
 import pytest
 
-from ui.settings_dialog import SettingsDialog, _SHORTCUT_KEY_MAP
-
+from ui.settings_dialog import _SHORTCUT_KEY_MAP, SettingsDialog
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -85,7 +84,7 @@ class TestShortcutsTab:
 
     def test_missing_shortcut_key_falls_back_to_empty(self, qtbot):
         """When a shortcut key is absent from settings, editor starts empty."""
-        cfg = {"shortcuts": {}}  # no keys
+        cfg: dict[str, object] = {"shortcuts": {}}  # no keys
         dlg = SettingsDialog(cfg)
         qtbot.addWidget(dlg)
         # The dialog should build without crashing

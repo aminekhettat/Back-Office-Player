@@ -13,8 +13,7 @@ error), export_segments_text (csv, txt, invalid format).
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -26,7 +25,6 @@ from infra.persistence import (
     load_segments,
     save_segments,
 )
-
 
 # ---------------------------------------------------------------------------
 # get_metadata_path
@@ -48,12 +46,13 @@ class TestGetMetadataPath:
         """get_metadata_path works with any file extension."""
         p = tmp_path / "track.wav"
         meta = get_metadata_path(p)
+        assert meta is not None
         assert meta.name == "track.wav.segments.json"
 
     def test_string_path_accepted(self, tmp_path):
         """get_metadata_path accepts a string path."""
         p = str(tmp_path / "song.flac")
-        meta = get_metadata_path(p)
+        meta = get_metadata_path(p)  # type: ignore[arg-type]
         assert meta is not None
         assert meta.name == "song.flac.segments.json"
 
@@ -86,6 +85,7 @@ class TestLoadSegments:
         """load_segments returns empty when JSON is malformed."""
         audio = tmp_path / "old.mp3"
         meta = get_metadata_path(audio)
+        assert meta is not None
         meta.write_text("NOT JSON {{", encoding="utf-8")
         m = load_segments(audio)
         assert m.list_segments() == []
@@ -102,6 +102,7 @@ class TestLoadSegments:
         """load_segments handles old JSON that lacks optional fields."""
         audio = tmp_path / "old.mp3"
         meta = get_metadata_path(audio)
+        assert meta is not None
         old_data = {
             "segments": [{"name": "x", "start_sec": 0.0, "end_sec": 1.0}]
         }
@@ -135,6 +136,7 @@ class TestSaveSegments:
         audio = tmp_path / "song.mp3"
         save_segments(audio, _build_manager())
         meta = get_metadata_path(audio)
+        assert meta is not None
         data = json.loads(meta.read_text(encoding="utf-8"))
         assert "segments" in data
         assert len(data["segments"]) == 2
@@ -142,7 +144,7 @@ class TestSaveSegments:
     def test_save_write_error_is_silenced(self, tmp_path):
         """save_segments silently handles write errors."""
         audio = tmp_path / "song.mp3"
-        meta = get_metadata_path(audio)
+        get_metadata_path(audio)
         with patch("infra.persistence.json.dump", side_effect=OSError("disk full")):
             save_segments(audio, _build_manager())  # must not raise
 

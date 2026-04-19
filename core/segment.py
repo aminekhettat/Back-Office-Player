@@ -23,8 +23,8 @@ A segment is defined by:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict, field
-from typing import Dict, Any
+from dataclasses import asdict, dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -70,7 +70,7 @@ class Segment:
         """
         return max(0.0, self.end_sec - self.start_sec)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize the segment to a dictionary.
 
@@ -82,7 +82,7 @@ class Segment:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Segment":
+    def from_dict(cls, data: dict[str, Any]) -> Segment:
         """
         Build a :class:`Segment` from a dictionary.
 

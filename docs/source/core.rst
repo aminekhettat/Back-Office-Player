@@ -58,17 +58,3 @@ core.commands module
    :members:
    :undoc-members:
    :show-inheritance:
-
-
-core.audio\_player module (Legacy — VLC-based)
------------------------------------------------
-
-.. automodule:: core.audio_player
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-.. note::
-
-   This module is retained for backward compatibility.
-   Use :mod:`core.audio_player_native` in new code.

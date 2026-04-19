@@ -122,7 +122,7 @@ def test_config_export_import():
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config_data, f)
 
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             loaded_data = json.load(f)
 
         assert loaded_data["audio_file"] == "/path/to/song.mp3"

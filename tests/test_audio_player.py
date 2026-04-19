@@ -13,15 +13,12 @@ audio array play to completion in a fake OutputStream.
 from __future__ import annotations
 
 import threading
-import time
-from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
 from core.audio_player_native import AudioPlayer
-
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures
@@ -88,7 +85,7 @@ class TestAudioPlayerLoad:
         with (
             patch("librosa.load", side_effect=RuntimeError("oops")),
             patch("sounddevice.OutputStream"),
-            pytest.raises(Exception),
+            pytest.raises(RuntimeError),
         ):
             player.load_file(p)
         assert player._audio_data is None
@@ -582,3 +579,258 @@ class TestPlaybackWorker:
             if player._playback_thread is not None:
                 player._playback_thread.join(timeout=5)
         assert not player._is_playing
+
+    def test_worker_returns_immediately_without_audio(self):
+        """_playback_worker returns immediately when _audio_data is None (line 495)."""
+        player = AudioPlayer()
+        done = threading.Event()
+
+        def _run():
+            player._playback_worker()
+            done.set()
+
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
+        assert done.wait(timeout=2.0), "_playback_worker did not return promptly"
+
+    def test_worker_breaks_when_audio_cleared_during_startup(self):
+        """Worker exits cleanly when _audio_data is cleared after the entry guard
+        but before the main loop body (covers the 'active_audio is None' branch,
+        line 526)."""
+        audio = np.ones(44100, dtype=np.float32) * 0.001
+        player = AudioPlayer()
+        with player._lock:
+            player._audio_data = audio.copy()
+            player._sample_rate = 44100
+            player._duration = 1.0
+            player._is_playing = True
+            player._stop_playback_thread = False
+
+        stream_started = threading.Event()
+
+        class _ClearingStream:
+            """Mock OutputStream that wipes _audio_data on start()."""
+
+            def __init__(self, **kw):
+                pass
+
+            def start(self):
+                # Worker NOT holding lock here — safe to acquire.
+                with player._lock:
+                    player._audio_data = None
+                    player._processed_audio = None
+                stream_started.set()
+
+            def write(self, data):
+                pass
+
+            def stop(self):
+                pass
+
+            def close(self):
+                pass
+
+        with patch("sounddevice.OutputStream", side_effect=lambda **kw: _ClearingStream(**kw)):
+            t = threading.Thread(target=player._playback_worker, daemon=True)
+            t.start()
+            assert stream_started.wait(timeout=2.0), "stream.start() not called"
+            t.join(timeout=2.0)
+
+        assert not player._is_playing
+
+    def test_worker_empty_chunk_writes_silence(self):
+        """When a chunk slice is empty (actual==0) the worker writes silence (line 564)."""
+
+        class _EmptySliceAudio:
+            """Fake audio that returns empty slices but reports non-zero length."""
+
+            def __init__(self):
+                self._len_calls = 0
+
+            def __len__(self):
+                self._len_calls += 1
+                # First call: appear large so we enter the main loop body.
+                # Second call: return 0 to trigger pos >= total and break.
+                return 0 if self._len_calls > 1 else 10000
+
+            def __getitem__(self, key):
+                return np.array([], dtype=np.float32)
+
+        player = AudioPlayer()
+        with player._lock:
+            player._audio_data = _EmptySliceAudio()  # type: ignore[assignment]
+            player._sample_rate = 44100
+            player._duration = 1.0
+            player._is_playing = True
+            player._stop_playback_thread = False
+
+        mock_stream = MagicMock()
+
+        with patch("sounddevice.OutputStream", return_value=mock_stream):
+            t = threading.Thread(target=player._playback_worker, daemon=True)
+            t.start()
+            t.join(timeout=5.0)
+
+        # Worker must have written at least one zero block (silence) and then stopped.
+        mock_stream.write.assert_called()
+        assert not player._is_playing
+
+    def test_worker_stream_stop_exception_is_caught(self):
+        """Exception in stream.stop() during finally is logged, not raised (lines 585-586)."""
+        audio = np.ones(10, dtype=np.float32) * 0.001
+        player = AudioPlayer()
+        with player._lock:
+            player._audio_data = audio.copy()
+            player._sample_rate = 44100
+            player._duration = float(len(audio)) / 44100
+            player._is_playing = True
+            player._stop_playback_thread = False
+
+        mock_stream = MagicMock()
+        mock_stream.stop.side_effect = RuntimeError("cannot stop")
+
+        with patch("sounddevice.OutputStream", return_value=mock_stream):
+            # Call directly (not via play()) so we control the thread join.
+            t = threading.Thread(target=player._playback_worker, daemon=True)
+            t.start()
+            t.join(timeout=5.0)
+
+        # Must finish without propagating the exception.
+        assert not player._is_playing
+
+
+# ---------------------------------------------------------------------------
+# set_position — duration=0 fallback branch
+# ---------------------------------------------------------------------------
+
+class TestSetPositionDurationZero:
+    def test_set_position_duration_zero_uses_sample_rate(self, tmp_path, sample_audio, sample_rate, mock_audio):
+        """set_position falls back to sample_rate multiply when _duration==0 (line 236)."""
+        p = tmp_path / "audio.mp3"
+        p.touch()
+        player = AudioPlayer()
+        player.load_file(p)
+        # Force duration to 0 while keeping audio data present.
+        with player._lock:
+            player._duration = 0.0
+        player.set_position(2.0)
+        # With duration=0: clamped = max(0, min(0, 2.0)) = 0.
+        # else branch: _current_sample_pos = int(0 * sample_rate) = 0.
+        with player._lock:
+            assert player._current_sample_pos == 0
+
+
+# ---------------------------------------------------------------------------
+# get_position — empty-buffer branch
+# ---------------------------------------------------------------------------
+
+class TestGetPositionEmptyBuffer:
+    def test_get_position_empty_audio_returns_zero(self):
+        """get_position returns 0.0 when the active buffer is empty (line 257)."""
+        player = AudioPlayer()
+        # Set up state: audio data present but zero-length.
+        with player._lock:
+            player._audio_data = np.zeros(0, dtype=np.float32)
+            player._sample_rate = 44100
+            player._duration = 0.0
+        assert player.get_position() == pytest.approx(0.0)
+
+
+# ---------------------------------------------------------------------------
+# clear_processed_audio — all branches
+# ---------------------------------------------------------------------------
+
+class TestClearProcessedAudio:
+    def test_clear_when_processed_audio_is_none_is_noop(self, tmp_path, sample_audio, sample_rate, mock_audio):
+        """clear_processed_audio is a no-op when _processed_audio is already None (lines 376-386)."""
+        p = tmp_path / "audio.mp3"
+        p.touch()
+        player = AudioPlayer()
+        player.load_file(p)
+        assert player._processed_audio is None
+        player.clear_processed_audio()  # must not raise
+        assert player._processed_audio is None
+
+    def test_clear_when_audio_data_is_none_is_noop(self):
+        """clear_processed_audio is a no-op when _audio_data is None."""
+        player = AudioPlayer()
+        fake = np.ones(100, dtype=np.float32)
+        with player._lock:
+            player._processed_audio = fake
+            player._audio_data = None
+        player.clear_processed_audio()
+        assert player._processed_audio is None
+
+    def test_clear_rescales_position_when_lengths_differ(self, tmp_path, sample_audio, sample_rate, mock_audio):
+        """clear_processed_audio rescales _current_sample_pos when lengths differ."""
+        p = tmp_path / "audio.mp3"
+        p.touch()
+        player = AudioPlayer()
+        player.load_file(p)
+        raw_len = len(sample_audio)
+        processed = np.ones(raw_len * 2, dtype=np.float32)
+        with player._lock:
+            player._processed_audio = processed
+            player._current_sample_pos = raw_len  # halfway through processed buf
+        player.clear_processed_audio()
+        # Expected: raw_len * (raw_len / (raw_len * 2)) = raw_len / 2
+        with player._lock:
+            assert player._current_sample_pos == raw_len // 2
+        assert player._processed_audio is None
+
+    def test_clear_same_length_does_not_rescale(self, tmp_path, sample_audio, sample_rate, mock_audio):
+        """clear_processed_audio skips rescaling when old_len == new_len."""
+        p = tmp_path / "audio.mp3"
+        p.touch()
+        player = AudioPlayer()
+        player.load_file(p)
+        raw_len = len(sample_audio)
+        processed = np.ones(raw_len, dtype=np.float32)  # same length
+        original_pos = raw_len // 4
+        with player._lock:
+            player._processed_audio = processed
+            player._current_sample_pos = original_pos
+        player.clear_processed_audio()
+        with player._lock:
+            assert player._current_sample_pos == original_pos
+        assert player._processed_audio is None
+
+
+# ---------------------------------------------------------------------------
+# apply_pitch_async — position rescaling when buffer length changes
+# ---------------------------------------------------------------------------
+
+class TestApplyPitchAsyncRescaling:
+    def test_swap_buffer_rescales_position_on_length_change(
+        self, tmp_path, sample_audio, sample_rate, mock_audio
+    ):
+        """_swap_buffer rescales _current_sample_pos when new buffer length ≠ old (line 423)."""
+        p = tmp_path / "audio.mp3"
+        p.touch()
+        player = AudioPlayer()
+        player.load_file(p)
+
+        raw_len = len(sample_audio)
+        # Position set to midpoint.
+        with player._lock:
+            player._current_sample_pos = raw_len // 2
+
+        # stretch returns audio twice as long (simulates 0.5x tempo).
+        stretched = np.ones(raw_len * 2, dtype=np.float32)
+        done = threading.Event()
+
+        player.set_pitch_preserving(True)
+        player.set_tempo(1.5)
+
+        with patch.object(player._pitch_engine, "stretch") as mock_stretch:
+            def fake_stretch(audio, sr, rate, on_done, on_error):
+                on_done(stretched)
+
+            mock_stretch.side_effect = fake_stretch
+            player.apply_pitch_async(lambda: done.set())
+            assert done.wait(timeout=2.0)
+
+        # old_len = raw_len, new_len = raw_len * 2
+        # expected_pos = (raw_len // 2) * (raw_len * 2) / raw_len = raw_len
+        with player._lock:
+            assert player._current_sample_pos == raw_len

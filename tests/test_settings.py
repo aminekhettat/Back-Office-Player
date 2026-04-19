@@ -16,8 +16,6 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 import infra.settings as settings_module
 from infra.settings import (
     DEFAULT_SETTINGS,
@@ -26,7 +24,6 @@ from infra.settings import (
     load_settings,
     save_settings,
 )
-
 
 # ---------------------------------------------------------------------------
 # get_settings_path

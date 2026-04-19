@@ -26,11 +26,11 @@ can treat them uniformly.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 import scipy.io.wavfile as wav
 import soundfile as sf
-
 
 # ── Shared helpers ─────────────────────────────────────────────────────────
 
@@ -83,7 +83,7 @@ def _validate_and_slice(
     if slice_data.size == 0:
         raise ValueError("Le segment sélectionné ne contient aucun échantillon.")
 
-    return np.clip(slice_data, -1.0, 1.0).astype(np.float32)
+    return cast(np.ndarray, np.clip(slice_data, -1.0, 1.0).astype(np.float32))
 
 
 # ── Public API ─────────────────────────────────────────────────────────────

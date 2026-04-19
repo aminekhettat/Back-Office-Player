@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'Back-Office Player'
 copyright = '2025, BLIND SYSTEMS'
 author = 'Amine KHETTAT'
-release = '1.1.1'
+release = '2.0.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -32,9 +32,12 @@ autodoc_mock_imports = [
     'vlc',
     'librosa',
     'sounddevice',
+    'soundfile',
     'numpy',
     'scipy',
     'PySide6',
+    'platformdirs',
+    'lameenc',
 ]
 
 

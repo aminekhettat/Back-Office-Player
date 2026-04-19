@@ -16,13 +16,9 @@ from __future__ import annotations
 
 import json
 import threading
-from io import BytesIO
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from infra.updater import check_for_update
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -104,7 +100,7 @@ class TestCheckForUpdate:
                 original_run()
                 done.set()
 
-            t.run = _run_and_set
+            t.run = _run_and_set  # type: ignore[method-assign]
             return t
 
         with patch("urllib.request.urlopen", side_effect=OSError("no network")), \
@@ -149,3 +145,49 @@ class TestCheckForUpdate:
 
         _wait_for(event)
         assert any("example.com" in u for u in used_urls)
+
+    def test_non_https_url_calls_on_error(self):
+        """A non-HTTPS URL raises ValueError which is forwarded to on_error (line 63)."""
+        event = threading.Event()
+        errors: list[Exception] = []
+
+        def on_err(exc: Exception) -> None:
+            errors.append(exc)
+            event.set()
+
+        check_for_update(
+            "v1.0.0",
+            lambda v: None,
+            url="http://insecure.example.com/releases",
+            on_error=on_err,
+        )
+
+        _wait_for(event)
+        assert len(errors) == 1
+        assert isinstance(errors[0], ValueError)
+
+    def test_non_https_url_without_on_error_is_swallowed(self):
+        """A non-HTTPS URL raises ValueError; silently dropped when on_error is None."""
+        done = threading.Event()
+        original_thread = threading.Thread
+
+        def _patched_thread(*a, **kw):
+            t = original_thread(*a, **kw)
+            original_run = t.run
+
+            def _run_and_set():
+                original_run()
+                done.set()
+
+            t.run = _run_and_set  # type: ignore[method-assign]
+            return t
+
+        with patch("threading.Thread", side_effect=_patched_thread):
+            check_for_update(
+                "v1.0.0",
+                lambda v: None,
+                url="http://insecure.example.com/releases",
+                on_error=None,
+            )
+
+        _wait_for(done)  # must complete without raising

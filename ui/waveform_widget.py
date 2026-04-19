@@ -18,8 +18,6 @@ corresponding audio position in seconds.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import numpy as np
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPen
@@ -39,16 +37,16 @@ class WaveformWidget(QWidget):
 
     seek_requested = Signal(float)
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
-        self._audio: Optional[np.ndarray] = None
+        self._audio: np.ndarray | None = None
         self._sr: int = 0
-        self._envelope: Optional[np.ndarray] = None
+        self._envelope: np.ndarray | None = None
         self._position: float = 0.0
         self._duration: float = 0.0
-        self._point_a: Optional[float] = None
-        self._point_b: Optional[float] = None
+        self._point_a: float | None = None
+        self._point_b: float | None = None
         self._segments: list = []
 
         self.setMinimumHeight(80)
@@ -85,12 +83,12 @@ class WaveformWidget(QWidget):
         self._position = seconds
         self.update()
 
-    def set_point_a(self, seconds: Optional[float]) -> None:
+    def set_point_a(self, seconds: float | None) -> None:
         """Set or clear the A loop marker."""
         self._point_a = seconds
         self.update()
 
-    def set_point_b(self, seconds: Optional[float]) -> None:
+    def set_point_b(self, seconds: float | None) -> None:
         """Set or clear the B loop marker."""
         self._point_b = seconds
         self.update()
@@ -142,7 +140,7 @@ class WaveformWidget(QWidget):
 
         # Segment ticks (dotted purple)
         seg_pen = QPen(QColor(160, 80, 220), 1)
-        seg_pen.setStyle(Qt.DotLine)
+        seg_pen.setStyle(Qt.PenStyle.DotLine)
         for seg in self._segments:
             sx = int(seg.start_sec / self._duration * w)
             ex = int(seg.end_sec / self._duration * w)
@@ -174,7 +172,7 @@ class WaveformWidget(QWidget):
         painter.end()
 
     def mousePressEvent(self, event) -> None:
-        if event.button() == Qt.LeftButton and self._duration > 0:
+        if event.button() == Qt.MouseButton.LeftButton and self._duration > 0:
             ratio = event.position().x() / self.width()
             self.seek_requested.emit(ratio * self._duration)
 
@@ -201,7 +199,7 @@ class WaveformWidget(QWidget):
             chunk = self._audio[i : i + hop]
             if len(chunk) > 0:
                 rms = float(np.sqrt(np.mean(chunk.astype(np.float64) ** 2)))
-            else:  # pragma: no cover
+            else:
                 rms = 0.0
             frames.append(rms)
 

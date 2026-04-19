@@ -2,7 +2,7 @@
 
 **Back-Office Player (BOP)** is a Windows desktop application written in Python that helps music students practise at home using rehearsal recordings.
 
-**Current version:** 1.1.3 — developed by [BLIND SYSTEMS](https://www.blindsystems.org) for the students of the [Culture Musique](https://www.sabamusic.fr) association.
+**Current version:** 2.0.0 — developed by [BLIND SYSTEMS](https://www.blindsystems.org) for the students of the [Culture Musique](https://www.sabamusic.fr) association.
 
 ---
 
@@ -33,6 +33,8 @@ The UI is built with **Qt (PySide6)** for screen-reader compatibility on Windows
 
 - All buttons, sliders, and controls have accessible names and descriptions.
 - Full keyboard navigation with Tab / Shift+Tab; explicit tab order puts transport controls first.
+- **Position slider is reported as time** (`mm:ss / mm:ss`) rather than a raw second count, via a custom `QAccessible` factory.
+- Tempo and pitch slider changes are announced in real time (assertive `QAccessible.announce`), so the screen reader always reports the current value without the user having to re-read the control.
 - Position slider: **left/right arrows** to seek ±1 second.
 - Tempo slider: **up/down arrows** in 5 % steps.
 - Status label announces every significant event (file loaded, A/B set, segment saved, etc.).
@@ -268,7 +270,34 @@ cd docs
 
 ## Release History
 
-### v1.1.1 *(current)*
+### v2.0.0 *(current)*
+
+Major release — full quality overhaul and professional distribution.
+
+- **100 % test coverage (602 tests).** Every branch, line, and function in `core/`, `infra/`, and `ui/` is covered. Tests are powered by `pytest`, `pytest-qt`, and `hypothesis` (property-based tests).
+- **Type-safe codebase.** `mypy` runs in strict mode across all 52 source files with zero errors.
+- **Security audit.** `bandit` reports zero issues; only `B101` (assert in non-production code) is suppressed via `pyproject.toml`.
+- **No pragma exclusions.** All `# pragma: no cover` annotations have been removed; previously-skipped branches are now exercised by real tests.
+- **Ruff replaces Flake8.** The linter is now `ruff` (faster, more rules, isort integration). `B017` replaced bare `pytest.raises(Exception)` with typed `pytest.raises(RuntimeError)` throughout the test suite.
+- **Source raises `RuntimeError` on load failure.** `AudioPlayer.load_file` now raises `RuntimeError` instead of the bare `Exception`, giving callers a checkable, typed exception.
+- **CI rebuilt on Ubuntu.** All jobs (`lint`, `security`, `typecheck`, `test`, `docs`) now run on `ubuntu-latest` with properly mocked Qt / PortAudio system packages, making the matrix (3.10 / 3.11 / 3.12) fully reliable.
+- **Sphinx docs — zero warnings.** Added `soundfile`, `platformdirs`, and `lameenc` to `autodoc_mock_imports`; removed stale `core.audio_player` (VLC legacy) reference; created missing `docs/_static/` directory.
+- **User manuals.** Bundled PDF / HTML user guides in French (`docs/user_manual_fr.rst`) and English (`docs/user_manual_en.rst`).
+- **Standalone Windows executable.** `BackOfficePlayer.exe` built with PyInstaller 6.x, single-file mode, UPX-compressed, embedded icon.
+
+---
+
+### v1.1.4
+- **Accessibility — position slider announced as time.** Introduced a custom `TimeSlider` subclass wired to a `QAccessible` factory so screen readers (JAWS, NVDA) now speak `mm:ss / mm:ss` on focus and while seeking, instead of the raw integer value.
+- **Accessibility — real-time slider announcements.** Tempo and pitch sliders now fire assertive `QAccessible.announce` events on every value change, so screen readers report the new value without the user having to re-read the component.
+- **Accessibility — button activation fix.** Resolved a regression where pressing Space or Enter on focused buttons (e.g. *Open audio file*) did nothing under JAWS: the default `play_pause` shortcut was moved from `Space` to `Ctrl+P` to stop `QShortcut` from hijacking native button activation.
+- **GUI overhaul.** Restructured the main menu bar into five standard Windows sections (File, Edit, Playback, Settings, Help), exposed Undo/Redo in the Edit menu, added an About dialog, and brought the *pitch-preserving tempo* checkbox back to the main UI next to the pitch slider.
+- **Shortcut reliability.** Menu actions and global shortcuts no longer collide: all covered shortcuts are now bound once, on their `QAction`, removing Qt's “ambiguous activation” warnings and the silent misfires they caused.
+- **Pitch slider — real-time response in tape mode.** Pitch shift is now applied directly in the playback worker via the resampling rate multiplier (`tempo × 2^(semitones/12)`), removing the 150 ms debounce + slow librosa recompute round-trip when the pitch-preserving option is off.
+- **Pitch-preserving — correct audio after restart.** When the app reopens with `pitch_preserving=true` and a saved tempo ≠ 100 %, it now pre-computes the stretched buffer as soon as a file is loaded, instead of falling back to tape-rate playback (which previously produced a detuned, “weird” sound).
+- **Position correctness across buffer swaps.** The audio engine now stores playback position in *song time* rather than a raw sample index and rescales `_current_sample_pos` whenever the active buffer length changes (pitch-preserving on/off, re-stretch, re-shift). Fixes position drift and loop-point glitches when switching modes mid-playback.
+
+### v1.1.1
 - Practice history: session logging (file, duration, loops, tempo) with table view and CSV export.
 - Progressive tempo: practice panel with configurable start/step/target, loop count, and loop delay.
 - Waveform display: interactive RMS waveform with playhead, A/B markers, and segment tick marks; click to seek.

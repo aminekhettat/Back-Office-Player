@@ -23,7 +23,7 @@ Features
 
 from __future__ import annotations
 
-from typing import List, Optional, Dict, Any
+from typing import Any
 
 from .segment import Segment
 
@@ -46,7 +46,7 @@ class SegmentManager:
         Initialize an empty :class:`SegmentManager`.
         """
         # Internal list of segments.
-        self._segments: List[Segment] = []
+        self._segments: list[Segment] = []
 
     # ------------------------------------------------------------------ #
     # Segment operations
@@ -80,7 +80,7 @@ class SegmentManager:
         """
         self._segments = [s for s in self._segments if s.name != name]
 
-    def get_segment(self, name: str) -> Optional[Segment]:
+    def get_segment(self, name: str) -> Segment | None:
         """
         Return the first segment with a given name.
 
@@ -99,7 +99,7 @@ class SegmentManager:
                 return s
         return None
 
-    def list_segments(self) -> List[Segment]:
+    def list_segments(self) -> list[Segment]:
         """
         Return a list of all segments.
 
@@ -113,7 +113,7 @@ class SegmentManager:
     # ------------------------------------------------------------------ #
     # Serialization
     # ------------------------------------------------------------------ #
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize the collection of segments to a dictionary.
 
@@ -178,7 +178,7 @@ class SegmentManager:
                 return True
         return False
 
-    def list_by_category(self, category: str) -> List["Segment"]:
+    def list_by_category(self, category: str) -> list[Segment]:
         """
         Return all segments that belong to *category*.
 
@@ -195,7 +195,7 @@ class SegmentManager:
         return [s for s in self._segments if s.category == category]
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SegmentManager":
+    def from_dict(cls, data: dict[str, Any]) -> SegmentManager:
         """
         Build a :class:`SegmentManager` from a dictionary.
 

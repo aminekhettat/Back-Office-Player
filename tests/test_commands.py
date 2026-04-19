@@ -14,16 +14,13 @@ enforcement).
 
 from __future__ import annotations
 
-import pytest
-
-from core.segment import Segment
-from core.segment_manager import SegmentManager
 from core.commands import (
     AddSegmentCommand,
     CommandHistory,
     RemoveSegmentCommand,
 )
-
+from core.segment import Segment
+from core.segment_manager import SegmentManager
 
 # ---------------------------------------------------------------------------
 # Helpers

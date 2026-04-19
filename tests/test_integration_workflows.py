@@ -26,7 +26,6 @@ from core.segment import Segment
 from core.segment_manager import SegmentManager
 from infra.persistence import load_segments, save_segments
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

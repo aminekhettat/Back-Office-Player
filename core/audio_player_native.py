@@ -25,7 +25,7 @@ Requirements
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2026-04-19
-:version: 1.1.3
+:version: 1.1.4
 :disclaimer: Distributed on an "AS IS" basis, WITHOUT WARRANTIES OR
              CONDITIONS OF ANY KIND. See the LICENSE file for the full
              terms of the Apache License, Version 2.0.
@@ -35,11 +35,11 @@ from __future__ import annotations
 
 import logging
 import threading
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
-import numpy as np
 import librosa
+import numpy as np
 import sounddevice as sd
 
 from core.pitch_engine import PitchEngine
@@ -66,9 +66,9 @@ class AudioPlayer:
     def __init__(self) -> None:
         """Initialize the native audio player."""
         # Audio data
-        self._audio_data: Optional[np.ndarray] = None  # float32, mono, [-1, 1]
+        self._audio_data: np.ndarray | None = None  # float32, mono, [-1, 1]
         self._sample_rate: int = 0
-        self.current_file_path: Optional[Path] = None
+        self.current_file_path: Path | None = None
 
         # Playback state
         self._is_playing: bool = False
@@ -83,13 +83,13 @@ class AudioPlayer:
         # Pitch parameters
         self._pitch_semitones: float = 0.0      # semitone offset (-12 to +12)
         self._pitch_preserving: bool = False    # use PitchEngine for tempo
-        self._processed_audio: Optional[np.ndarray] = None  # pitch/stretch result
+        self._processed_audio: np.ndarray | None = None  # pitch/stretch result
         self._pitch_engine = PitchEngine()
 
         # Playback thread / stream
-        self._playback_thread: Optional[threading.Thread] = None
+        self._playback_thread: threading.Thread | None = None
         self._stop_playback_thread: bool = False
-        self._stream: Optional[sd.OutputStream] = None
+        self._stream: sd.OutputStream | None = None
 
         self._lock = threading.RLock()
 
@@ -121,9 +121,11 @@ class AudioPlayer:
 
         try:
             with self._lock:
-                self._audio_data, self._sample_rate = librosa.load(
+                audio_data, sample_rate = librosa.load(
                     str(file_path), sr=None, mono=True
                 )
+                self._audio_data = audio_data
+                self._sample_rate = int(sample_rate)
                 self._duration = librosa.get_duration(
                     y=self._audio_data, sr=self._sample_rate
                 )
@@ -134,7 +136,7 @@ class AudioPlayer:
         except Exception as exc:
             self._audio_data = None
             self._sample_rate = 0
-            raise Exception(f"Could not load audio file: {exc}") from exc
+            raise RuntimeError(f"Could not load audio file: {exc}") from exc
 
     # ------------------------------------------------------------------ #
     # Playback controls
@@ -219,7 +221,19 @@ class AudioPlayer:
 
         with self._lock:
             clamped = max(0.0, min(self._duration, seconds))
-            self._current_sample_pos = int(clamped * self._sample_rate)
+            # Map song-time to the index of the active buffer (which may
+            # be time-stretched and therefore a different length).
+            active = (
+                self._processed_audio
+                if self._processed_audio is not None
+                else self._audio_data
+            )
+            if self._duration > 0 and active is not None:
+                self._current_sample_pos = int(
+                    clamped / self._duration * len(active)
+                )
+            else:
+                self._current_sample_pos = int(clamped * self._sample_rate)
 
     def get_position(self) -> float:
         """
@@ -234,7 +248,16 @@ class AudioPlayer:
             return 0.0
 
         with self._lock:
-            return self._current_sample_pos / self._sample_rate
+            active = (
+                self._processed_audio
+                if self._processed_audio is not None
+                else self._audio_data
+            )
+            if active is None or len(active) == 0:
+                return 0.0
+            # Report song-time regardless of whether the active buffer
+            # has been time-stretched.
+            return self._current_sample_pos / len(active) * self._duration
 
     def get_duration(self) -> float:
         """Return the media duration in seconds."""
@@ -246,7 +269,7 @@ class AudioPlayer:
         with self._lock:
             return self._is_playing
 
-    def get_audio_snapshot(self) -> tuple[Optional[np.ndarray], int]:
+    def get_audio_snapshot(self) -> tuple[np.ndarray | None, int]:
         """
         Return a thread-safe snapshot of the current audio data and sample rate.
 
@@ -343,6 +366,25 @@ class AudioPlayer:
         with self._lock:
             return self._pitch_preserving
 
+    def clear_processed_audio(self) -> None:
+        """Drop any pre-processed buffer so playback uses raw audio.
+
+        Rescales ``_current_sample_pos`` from the stretched buffer's
+        length back to the raw buffer's length so playback resumes at
+        the same song time.
+        """
+        with self._lock:
+            if self._processed_audio is None or self._audio_data is None:
+                self._processed_audio = None
+                return
+            old_len = len(self._processed_audio)
+            new_len = len(self._audio_data)
+            if old_len > 0 and new_len > 0 and old_len != new_len:
+                self._current_sample_pos = int(
+                    self._current_sample_pos * new_len / old_len
+                )
+            self._processed_audio = None
+
     def apply_pitch_async(self, on_ready: Callable[[], None]) -> None:
         """
         Regenerate ``_processed_audio`` in a background thread.
@@ -369,54 +411,61 @@ class AudioPlayer:
             tempo = self._tempo
             pitch_preserving = self._pitch_preserving
 
+        def _swap_buffer(new_buf: np.ndarray | None) -> None:
+            """Replace ``_processed_audio`` and rescale sample position
+            so the perceived song time stays the same across buffers
+            of different lengths (time-stretch changes length)."""
+            with self._lock:
+                old_buf = self._processed_audio if self._processed_audio is not None else self._audio_data
+                old_len = len(old_buf) if old_buf is not None else 0
+                new_len = len(new_buf) if new_buf is not None else (len(self._audio_data) if self._audio_data is not None else 0)
+                if old_len > 0 and new_len > 0 and old_len != new_len:
+                    self._current_sample_pos = int(
+                        self._current_sample_pos * new_len / old_len
+                    )
+                self._processed_audio = new_buf
+
         def _apply_shift(shifted: np.ndarray) -> None:
             if pitch_preserving and tempo != 1.0:
                 def _apply_stretch(stretched: np.ndarray) -> None:
-                    with self._lock:
-                        self._processed_audio = stretched
+                    _swap_buffer(stretched)
                     on_ready()
 
                 def _on_stretch_error(exc: Exception) -> None:
                     _logger.warning("PitchEngine stretch error: %s", exc)
-                    with self._lock:
-                        self._processed_audio = shifted
+                    _swap_buffer(shifted)
                     on_ready()
 
                 self._pitch_engine.stretch(
                     shifted, sr, tempo, _apply_stretch, _on_stretch_error
                 )
             else:
-                with self._lock:
-                    self._processed_audio = shifted
+                _swap_buffer(shifted)
                 on_ready()
 
         def _on_shift_error(exc: Exception) -> None:
             _logger.warning("PitchEngine shift error: %s", exc)
             # Fall back: just use raw audio
-            with self._lock:
-                self._processed_audio = None
+            _swap_buffer(None)
             on_ready()
 
         if semitones != 0.0:
             self._pitch_engine.shift(audio, sr, semitones, _apply_shift, _on_shift_error)
         elif pitch_preserving and tempo != 1.0:
             def _apply_stretch_direct(stretched: np.ndarray) -> None:
-                with self._lock:
-                    self._processed_audio = stretched
+                _swap_buffer(stretched)
                 on_ready()
 
             def _on_stretch_error_direct(exc: Exception) -> None:
                 _logger.warning("PitchEngine stretch error: %s", exc)
-                with self._lock:
-                    self._processed_audio = None
+                _swap_buffer(None)
                 on_ready()
 
             self._pitch_engine.stretch(
                 audio, sr, tempo, _apply_stretch_direct, _on_stretch_error_direct
             )
         else:
-            with self._lock:
-                self._processed_audio = None
+            _swap_buffer(None)
             on_ready()
 
     # ------------------------------------------------------------------ #
@@ -437,12 +486,12 @@ class AudioPlayer:
           fast tempo subsamples the source, slow tempo oversamples it.
           Both speed and pitch change together (tape effect).
         """
-        local_stream: Optional[sd.OutputStream] = None
+        local_stream: sd.OutputStream | None = None
         bs = self._BLOCKSIZE
 
         try:
             with self._lock:
-                if self._audio_data is None or self._sample_rate == 0:  # pragma: no cover
+                if self._audio_data is None or self._sample_rate == 0:
                     return
                 sample_rate = self._sample_rate
 
@@ -459,7 +508,7 @@ class AudioPlayer:
 
             while True:
                 # ── Read state and prepare audio block (lock held) ───────
-                audio_block: Optional[np.ndarray] = None
+                audio_block: np.ndarray | None = None
 
                 with self._lock:
                     if self._stop_playback_thread or not self._is_playing:
@@ -471,8 +520,10 @@ class AudioPlayer:
                         if self._processed_audio is not None
                         else self._audio_data
                     )
-                    if active_audio is None:  # pragma: no cover
-                        break
+                    # _audio_data can be cleared from the main thread between
+                    # the entry guard and here (race condition).
+                    if active_audio is None:
+                        break  # type: ignore[unreachable]
 
                     pos = self._current_sample_pos
                     total = len(active_audio)
@@ -486,13 +537,17 @@ class AudioPlayer:
                     # tempo=1.0 for the resampling step; otherwise apply the
                     # tape-style speed change as before.
                     if self._pitch_preserving and self._processed_audio is not None:
-                        tempo = 1.0
+                        rate = 1.0
                     else:
-                        tempo = self._tempo
+                        # Tape mode: combine tempo and pitch into one real-time
+                        # resampling rate so the pitch slider responds instantly
+                        # (raising pitch also speeds up playback — physical tape).
+                        pitch_rate = 2.0 ** (self._pitch_semitones / 12.0)
+                        rate = self._tempo * pitch_rate
                     volume = self._volume / 100.0
 
                     # Source samples to consume for this output block.
-                    source_size = max(1, int(bs * tempo))
+                    source_size = max(1, int(bs * rate))
                     end_pos = min(pos + source_size, total)
                     chunk = active_audio[pos:end_pos].copy() * volume
                     actual = len(chunk)
@@ -505,7 +560,7 @@ class AudioPlayer:
                         ).astype(np.float32)
                     elif actual > 0:
                         audio_block = chunk.astype(np.float32)
-                    else:  # pragma: no cover
+                    else:
                         audio_block = np.zeros(bs, dtype=np.float32)
 
                     # Advance sample position.
@@ -527,5 +582,5 @@ class AudioPlayer:
                 try:
                     local_stream.stop()
                     local_stream.close()
-                except Exception:  # pragma: no cover
-                    pass
+                except Exception as exc:
+                    _logger.warning("Error closing audio stream: %s", exc)

@@ -21,7 +21,7 @@ Responsibilities
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2026-04-19
-:version: 1.1.3
+:version: 1.1.4
 :disclaimer: Distributed on an "AS IS" basis, WITHOUT WARRANTIES OR
              CONDITIONS OF ANY KIND. See the LICENSE file for the full
              terms of the Apache License, Version 2.0.
@@ -30,13 +30,20 @@ Responsibilities
 from __future__ import annotations
 
 import json
+import logging
 import time
 from pathlib import Path
-from typing import List, Optional
 
-from PySide6.QtCore import QTimer, Qt
-from PySide6.QtGui import QAccessible, QAction, QIcon, QKeySequence, QShortcut
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import (
+    QAccessible,
+    QAction,
+    QIcon,
+    QKeySequence,
+    QShortcut,
+)
 from PySide6.QtWidgets import (
+    QAccessibleWidget,
     QCheckBox,
     QFileDialog,
     QHBoxLayout,
@@ -52,6 +59,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from __version__ import __version__ as _APP_VERSION
 from core.audio_loader import AudioLoaderThread
 from core.audio_player_native import AudioPlayer
 from core.commands import AddSegmentCommand, CommandHistory, RemoveSegmentCommand
@@ -68,7 +76,8 @@ from ui.segment_list_widget import SegmentListWidget
 from ui.settings_dialog import SettingsDialog
 from ui.waveform_widget import WaveformWidget
 
-from __version__ import __version__ as _APP_VERSION  # noqa: E402
+_logger = logging.getLogger(__name__)
+
 _CURRENT_VERSION = f"v{_APP_VERSION}"
 
 # ── Stylesheets ────────────────────────────────────────────────────────
@@ -97,6 +106,40 @@ _THEMES = {
 }
 
 
+class TimeSlider(QSlider):
+    """QSlider that reports its value as a formatted mm:ss time string
+    to assistive technologies (JAWS, NVDA, Narrator), rather than the
+    raw integer in seconds. The formatted text is read via the widget
+    property ``formattedTime`` (set by the owner on every value update)."""
+
+
+class _TimeSliderAccessible(QAccessibleWidget):
+    def __init__(self, widget: QWidget) -> None:
+        super().__init__(widget, QAccessible.Role.Slider)
+
+    def text(self, t):
+        if t in (QAccessible.Text.Value, QAccessible.Text.Description):
+            w = self.object()
+            if w is not None:
+                formatted = w.property("formattedTime")
+                if formatted:
+                    return str(formatted)
+        return super().text(t)
+
+
+# Strong refs to prevent Python from GC'ing the interface objects
+# before Qt is done with them.
+_time_slider_accessibles: list[_TimeSliderAccessible] = []
+
+
+def _time_slider_accessible_factory(key, obj):
+    if isinstance(obj, TimeSlider):
+        iface = _TimeSliderAccessible(obj)
+        _time_slider_accessibles.append(iface)
+        return iface
+    return None
+
+
 class MainWindowQt(QMainWindow):
     """
     Qt main window for Back-Office Player.
@@ -119,20 +162,27 @@ class MainWindowQt(QMainWindow):
         Prevents double-triggering per loop cycle.
     """
 
+    _accessible_factory_installed: bool = False
+
     def __init__(
         self, audio_player: AudioPlayer, segment_manager: SegmentManager
     ) -> None:
         super().__init__()
 
+        # Install QAccessible factory once per process (requires QApplication).
+        if not MainWindowQt._accessible_factory_installed:
+            QAccessible.installFactory(_time_slider_accessible_factory)
+            MainWindowQt._accessible_factory_installed = True
+
         self.audio_player = audio_player
         self.segment_manager = segment_manager
         self.settings = load_settings()
 
-        self.current_audio_path: Optional[Path] = None
+        self.current_audio_path: Path | None = None
 
         # A–B loop state
-        self.point_a: Optional[float] = None
-        self.point_b: Optional[float] = None
+        self.point_a: float | None = None
+        self.point_b: float | None = None
         self.loop_enabled: bool = False
         self.already_looped: bool = False
 
@@ -142,12 +192,12 @@ class MainWindowQt(QMainWindow):
         self._session_loop_count: int = 0
         self._session_tempo_sum: float = 0.0
         self._last_announce_time: float = 0.0
-        self._qt_shortcuts: List[QShortcut] = []  # keeps shortcuts alive
-        self._loader_thread: Optional[AudioLoaderThread] = None
+        self._qt_shortcuts: list[QShortcut] = []  # keeps shortcuts alive
+        self._loader_thread: AudioLoaderThread | None = None
         self._command_history = CommandHistory()
-        self._save_settings_timer: Optional[QTimer] = None  # created in _configure_timer
-        self._pitch_debounce_timer: Optional[QTimer] = None  # created in _configure_timer
-        self._tempo_debounce_timer: Optional[QTimer] = None  # created in _configure_timer
+        self._save_settings_timer: QTimer  # assigned in _configure_timer
+        self._pitch_debounce_timer: QTimer  # assigned in _configure_timer
+        self._tempo_debounce_timer: QTimer  # assigned in _configure_timer
         self._playing: bool = False  # track play state for toggle button
 
         self._build_ui()
@@ -172,6 +222,11 @@ class MainWindowQt(QMainWindow):
         self.audio_player.set_pitch_preserving(
             bool(self.settings.get("pitch_preserving", False))
         )
+
+    def showEvent(self, event) -> None:
+        """Give btn_open initial keyboard focus so Space/Enter work immediately."""
+        super().showEvent(event)
+        QTimer.singleShot(0, lambda: self.btn_open.setFocus())
 
     # ================================================================== #
     # UI construction
@@ -200,7 +255,7 @@ class MainWindowQt(QMainWindow):
         self.btn_stop.clicked.connect(self.on_stop)
         self.lbl_volume = QLabel()
         self.lbl_volume.setAccessibleName("Étiquette volume")
-        self.slider_volume = QSlider(Qt.Horizontal)
+        self.slider_volume = QSlider(Qt.Orientation.Horizontal)
         self.slider_volume.setRange(0, 100)
         self.slider_volume.setAccessibleName("Curseur de volume")
         self.slider_volume.valueChanged.connect(self.on_volume_change)
@@ -213,10 +268,11 @@ class MainWindowQt(QMainWindow):
         position_layout = QHBoxLayout()
         self.lbl_position = QLabel()
         self.lbl_position.setAccessibleName("Étiquette de position")
-        self.slider_position = QSlider(Qt.Horizontal)
+        self.slider_position = TimeSlider(Qt.Orientation.Horizontal)
         self.slider_position.setRange(0, 0)
-        self.slider_position.setAccessibleName("Barre de position")
+        self.slider_position.setAccessibleName("Position 00:00 / 00:00")
         self.slider_position.setSingleStep(1)
+        self.slider_position.setProperty("formattedTime", "00:00 / 00:00")
         self.slider_position.valueChanged.connect(self.on_seek)
         self.lbl_time = QLabel("00:00 / 00:00")
         self.lbl_time.setAccessibleName("Temps de lecture")
@@ -246,7 +302,7 @@ class MainWindowQt(QMainWindow):
         tempo_layout = QHBoxLayout()
         self.lbl_tempo = QLabel()
         self.lbl_tempo.setAccessibleName("Étiquette tempo")
-        self.slider_tempo = QSlider(Qt.Horizontal)
+        self.slider_tempo = QSlider(Qt.Orientation.Horizontal)
         self.slider_tempo.setRange(50, 200)
         self.slider_tempo.setValue(100)
         self.slider_tempo.setAccessibleName("Curseur de tempo")
@@ -270,7 +326,7 @@ class MainWindowQt(QMainWindow):
         pitch_layout = QHBoxLayout()
         self.lbl_pitch = QLabel()
         self.lbl_pitch.setAccessibleName("Étiquette tonalité")
-        self.slider_pitch = QSlider(Qt.Horizontal)
+        self.slider_pitch = QSlider(Qt.Orientation.Horizontal)
         self.slider_pitch.setRange(-12, 12)
         self.slider_pitch.setValue(0)
         self.slider_pitch.setAccessibleName("Curseur de tonalité")
@@ -289,6 +345,13 @@ class MainWindowQt(QMainWindow):
         pitch_layout.addWidget(self.lbl_pitch)
         pitch_layout.addWidget(self.slider_pitch)
         pitch_layout.addWidget(self.lbl_pitch_value)
+
+        # ── Row 5b: Pitch-preserving tempo checkbox ─────────────────────
+        self.chk_pitch_preserving = QCheckBox()
+        self.chk_pitch_preserving.setChecked(
+            bool(self.settings.get("pitch_preserving", False))
+        )
+        self.chk_pitch_preserving.toggled.connect(self._on_pitch_preserving_toggled)
 
         # ── Waveform widget ────────────────────────────────────────────
         self.waveform_widget = WaveformWidget()
@@ -356,6 +419,7 @@ class MainWindowQt(QMainWindow):
         main_layout.addLayout(loop_layout)
         main_layout.addLayout(tempo_layout)
         main_layout.addLayout(pitch_layout)
+        main_layout.addWidget(self.chk_pitch_preserving)
         main_layout.addWidget(self.waveform_widget)
         main_layout.addWidget(self.practice_panel)
         main_layout.addWidget(segment_section)
@@ -369,7 +433,8 @@ class MainWindowQt(QMainWindow):
         QWidget.setTabOrder(self.btn_stop, self.slider_volume)
         QWidget.setTabOrder(self.slider_volume, self.slider_tempo)
         QWidget.setTabOrder(self.slider_tempo, self.slider_pitch)
-        QWidget.setTabOrder(self.slider_pitch, self.slider_position)
+        QWidget.setTabOrder(self.slider_pitch, self.chk_pitch_preserving)
+        QWidget.setTabOrder(self.chk_pitch_preserving, self.slider_position)
         QWidget.setTabOrder(self.slider_position, self.btn_set_a)
         QWidget.setTabOrder(self.btn_set_a, self.btn_set_b)
         QWidget.setTabOrder(self.btn_set_b, self.btn_clear_ab)
@@ -464,6 +529,14 @@ class MainWindowQt(QMainWindow):
         self.lbl_tempo.setText(tr("lbl_tempo"))
         self.lbl_pitch.setText(tr("lbl_pitch"))
 
+        self.chk_pitch_preserving.setText(tr("chk_pitch_preserving_main"))
+        self.chk_pitch_preserving.setAccessibleName(
+            tr("settings_pitch_preserving_accessible_name")
+        )
+        self.chk_pitch_preserving.setAccessibleDescription(
+            tr("settings_pitch_preserving_accessible_desc")
+        )
+
         self.btn_save_segment.setText(tr("btn_save_segment"))
         self.btn_export_config.setText(tr("btn_export_config"))
         self.btn_import_config.setText(tr("btn_import_config"))
@@ -479,19 +552,18 @@ class MainWindowQt(QMainWindow):
     # Menu bar
     # ================================================================== #
     def _build_menu_bar(self) -> None:
-        """Build the application menu bar."""
+        """Build the application menu bar (File / Edit / Playback / Settings / Help)."""
         menubar: QMenuBar = self.menuBar()
 
-        # ── Menu Fichier ────────────────────────────────────────────────
+        # ── File menu ────────────────────────────────────────────────────
         file_menu: QMenu = menubar.addMenu(tr("menu_file"))
         file_menu.setAccessibleName(
             "Menu Fichier" if get_language() == "fr" else "File menu"
         )
 
-        act_open = QAction(tr("menu_open"), self)
-        act_open.setShortcut(QKeySequence("Ctrl+O"))
-        act_open.triggered.connect(self.on_open_file)
-        file_menu.addAction(act_open)
+        self.act_open = QAction(tr("menu_open"), self)
+        self.act_open.triggered.connect(self.on_open_file)
+        file_menu.addAction(self.act_open)
 
         self.recent_menu = QMenu(tr("menu_recent"), self)
         self.recent_menu.setAccessibleName(
@@ -503,18 +575,88 @@ class MainWindowQt(QMainWindow):
 
         file_menu.addSeparator()
 
-        act_export_csv = QAction(tr("menu_export_csv"), self)
-        act_export_csv.triggered.connect(self.on_export_segments_csv)
-        file_menu.addAction(act_export_csv)
+        self.act_export_bop = QAction(tr("menu_export_bop"), self)
+        self.act_export_bop.triggered.connect(self.on_export_config)
+        file_menu.addAction(self.act_export_bop)
+
+        self.act_import_bop = QAction(tr("menu_import_bop"), self)
+        self.act_import_bop.triggered.connect(self.on_import_config)
+        file_menu.addAction(self.act_import_bop)
+
+        self.act_export_csv = QAction(tr("menu_export_csv"), self)
+        self.act_export_csv.triggered.connect(self.on_export_segments_csv)
+        file_menu.addAction(self.act_export_csv)
 
         file_menu.addSeparator()
 
-        act_quit = QAction(tr("menu_quit"), self)
-        act_quit.setShortcut(QKeySequence("Ctrl+Q"))
-        act_quit.triggered.connect(self.close)
-        file_menu.addAction(act_quit)
+        self.act_quit = QAction(tr("menu_quit"), self)
+        self.act_quit.setShortcut(QKeySequence("Ctrl+Q"))
+        self.act_quit.triggered.connect(self.close)
+        file_menu.addAction(self.act_quit)
 
-        # ── Menu Paramètres ────────────────────────────────────────────
+        # ── Edit menu (Undo / Redo) ──────────────────────────────────────
+        edit_menu: QMenu = menubar.addMenu(tr("menu_edit"))
+        edit_menu.setAccessibleName(
+            "Menu Édition" if get_language() == "fr" else "Edit menu"
+        )
+
+        self.act_undo = QAction(tr("menu_undo"), self)
+        self.act_undo.setShortcut(QKeySequence("Ctrl+Z"))
+        self.act_undo.triggered.connect(self._on_undo)
+        edit_menu.addAction(self.act_undo)
+
+        self.act_redo = QAction(tr("menu_redo"), self)
+        self.act_redo.setShortcut(QKeySequence("Ctrl+Y"))
+        self.act_redo.triggered.connect(self._on_redo)
+        edit_menu.addAction(self.act_redo)
+
+        # ── Playback menu ────────────────────────────────────────────────
+        playback_menu: QMenu = menubar.addMenu(tr("menu_playback"))
+        playback_menu.setAccessibleName(
+            "Menu Lecture" if get_language() == "fr" else "Playback menu"
+        )
+
+        self.act_play_pause = QAction(tr("menu_play_pause"), self)
+        self.act_play_pause.triggered.connect(self.on_play_pause_toggle)
+        playback_menu.addAction(self.act_play_pause)
+
+        self.act_stop = QAction(tr("menu_stop"), self)
+        self.act_stop.triggered.connect(self.on_stop)
+        playback_menu.addAction(self.act_stop)
+
+        playback_menu.addSeparator()
+
+        self.act_set_a = QAction(tr("menu_set_a"), self)
+        self.act_set_a.triggered.connect(self.on_set_point_a)
+        playback_menu.addAction(self.act_set_a)
+
+        self.act_set_b = QAction(tr("menu_set_b"), self)
+        self.act_set_b.triggered.connect(self.on_set_point_b)
+        playback_menu.addAction(self.act_set_b)
+
+        self.act_clear_ab = QAction(tr("menu_clear_ab"), self)
+        self.act_clear_ab.triggered.connect(self.on_clear_points)
+        playback_menu.addAction(self.act_clear_ab)
+
+        self.act_toggle_loop = QAction(tr("menu_toggle_loop"), self)
+        self.act_toggle_loop.triggered.connect(self.on_toggle_loop)
+        playback_menu.addAction(self.act_toggle_loop)
+
+        playback_menu.addSeparator()
+
+        self.act_save_segment = QAction(tr("menu_save_segment"), self)
+        self.act_save_segment.triggered.connect(self.on_save_segment)
+        playback_menu.addAction(self.act_save_segment)
+
+        self.act_next_segment = QAction(tr("menu_next_segment"), self)
+        self.act_next_segment.triggered.connect(self.on_next_segment)
+        playback_menu.addAction(self.act_next_segment)
+
+        self.act_prev_segment = QAction(tr("menu_prev_segment"), self)
+        self.act_prev_segment.triggered.connect(self.on_prev_segment)
+        playback_menu.addAction(self.act_prev_segment)
+
+        # ── Settings menu ────────────────────────────────────────────────
         settings_menu: QMenu = menubar.addMenu(tr("menu_settings"))
         settings_menu.setAccessibleName(
             "Menu Paramètres" if get_language() == "fr" else "Settings menu"
@@ -524,14 +666,14 @@ class MainWindowQt(QMainWindow):
         act_prefs.triggered.connect(self.on_open_settings)
         settings_menu.addAction(act_prefs)
 
-        act_history = QAction(tr("menu_history"), self)
-        act_history.setShortcut(QKeySequence("Ctrl+H"))
-        act_history.triggered.connect(self._on_open_history)
-        settings_menu.addAction(act_history)
+        self.act_history = QAction(tr("menu_history"), self)
+        self.act_history.setShortcut(QKeySequence("Ctrl+H"))
+        self.act_history.triggered.connect(self._on_open_history)
+        settings_menu.addAction(self.act_history)
 
         settings_menu.addSeparator()
 
-        # ── Sous-menu Langue ───────────────────────────────────────────
+        # Language submenu
         lang_menu: QMenu = QMenu(tr("menu_language"), self)
         lang_menu.setAccessibleName(
             "Sous-menu de sélection de la langue" if get_language() == "fr"
@@ -551,6 +693,40 @@ class MainWindowQt(QMainWindow):
         lang_menu.addAction(self.act_lang_en)
 
         settings_menu.addMenu(lang_menu)
+
+        # ── Help menu ────────────────────────────────────────────────────
+        help_menu: QMenu = menubar.addMenu(tr("menu_help"))
+        help_menu.setAccessibleName(
+            "Menu Aide" if get_language() == "fr" else "Help menu"
+        )
+
+        act_about = QAction(tr("menu_about"), self)
+        act_about.triggered.connect(self._on_about)
+        help_menu.addAction(act_about)
+
+    def _on_about(self) -> None:
+        """Show the About dialog."""
+        if get_language() == "fr":
+            body = (
+                f"<h3>Back-Office Player</h3>"
+                f"<p>Version {_APP_VERSION}</p>"
+                f"<p>Outil de pratique audio pour les élèves de musique, "
+                f"développé par <b>BLIND SYSTEMS</b> pour l'association "
+                f"<b>Culture Musique</b>.</p>"
+                f"<p>Licence : Apache 2.0 &mdash; &copy; 2025 BLIND SYSTEMS.</p>"
+                f"<p><a href=\"https://www.blindsystems.org\">www.blindsystems.org</a></p>"
+            )
+        else:
+            body = (
+                f"<h3>Back-Office Player</h3>"
+                f"<p>Version {_APP_VERSION}</p>"
+                f"<p>Audio practice tool for music students, developed by "
+                f"<b>BLIND SYSTEMS</b> for the <b>Culture Musique</b> "
+                f"association.</p>"
+                f"<p>License: Apache 2.0 &mdash; &copy; 2025 BLIND SYSTEMS.</p>"
+                f"<p><a href=\"https://www.blindsystems.org\">www.blindsystems.org</a></p>"
+            )
+        QMessageBox.about(self, tr("dlg_about_title"), body)
 
     def _rebuild_recent_menu(self) -> None:
         """Rebuild the Recent Files submenu from settings."""
@@ -585,29 +761,40 @@ class MainWindowQt(QMainWindow):
         """
         Configure keyboard shortcuts from ``settings["shortcuts"]``.
 
-        Shortcuts are stored in ``self._qt_shortcuts`` to prevent
-        garbage collection.
+        Menu-covered actions receive their shortcut directly via
+        ``QAction.setShortcut`` so the menu displays the binding and
+        there is no ambiguity with a parallel ``QShortcut``. Only
+        slider-only actions (with no menu entry) use ``QShortcut``.
         """
-        # Remove old shortcuts
+        # Remove old slider-only shortcuts
         for sc in self._qt_shortcuts:
             sc.setEnabled(False)
             sc.deleteLater()
         self._qt_shortcuts = []
 
         sc_cfg: dict = self.settings.get("shortcuts", {})
-        bindings = {
-            "open": self.on_open_file,
-            "play_pause": self.on_play_pause_toggle,
-            "play": self.on_play,
-            "pause": self.on_pause,
-            "stop": self.on_stop,
-            "set_a": self.on_set_point_a,
-            "set_b": self.on_set_point_b,
-            "save_segment": self.on_save_segment,
-            "export_config": self.on_export_config,
-            "import_config": self.on_import_config,
-            "next_segment": self.on_next_segment,
-            "prev_segment": self.on_prev_segment,
+
+        # Map each user-configurable action name to its QAction. Setting
+        # an empty string clears the shortcut.
+        menu_actions = {
+            "open": (self.act_open, "Ctrl+O"),
+            "play_pause": (self.act_play_pause, "Ctrl+P"),
+            "stop": (self.act_stop, "Ctrl+S"),
+            "set_a": (self.act_set_a, "Ctrl+Shift+A"),
+            "set_b": (self.act_set_b, "Ctrl+Shift+B"),
+            "save_segment": (self.act_save_segment, "Ctrl+Shift+S"),
+            "export_config": (self.act_export_bop, "Ctrl+E"),
+            "import_config": (self.act_import_bop, "Ctrl+I"),
+            "next_segment": (self.act_next_segment, "Ctrl+Right"),
+            "prev_segment": (self.act_prev_segment, "Ctrl+Left"),
+            "toggle_loop": (self.act_toggle_loop, "Ctrl+L"),
+        }
+        for name, (action, default) in menu_actions.items():
+            key_str = sc_cfg.get(name, default) or default
+            action.setShortcut(QKeySequence(key_str))
+
+        # Slider-only actions: no menu entry, keep as QShortcut.
+        slider_bindings = {
             "volume_up": lambda: self.slider_volume.setValue(
                 min(100, self.slider_volume.value() + 5)
             ),
@@ -626,23 +813,17 @@ class MainWindowQt(QMainWindow):
             "pitch_down": lambda: self.slider_pitch.setValue(
                 max(-12, self.slider_pitch.value() - 1)
             ),
-            "toggle_loop": self.on_toggle_loop,
+            # "play" / "pause" kept as extra shortcuts (no menu entry —
+            # the menu offers a single Play/Pause toggle).
+            "play": self.on_play,
+            "pause": self.on_pause,
         }
-        for action, slot in bindings.items():
-            key_str = sc_cfg.get(action, "")
+        for name, slot in slider_bindings.items():
+            key_str = sc_cfg.get(name, "")
             if key_str:
                 sc = QShortcut(QKeySequence(key_str), self)
                 sc.activated.connect(slot)
                 self._qt_shortcuts.append(sc)
-
-        # Undo / Redo — always registered, not user-configurable
-        sc_undo = QShortcut(QKeySequence("Ctrl+Z"), self)
-        sc_undo.activated.connect(self._on_undo)
-        self._qt_shortcuts.append(sc_undo)
-
-        sc_redo = QShortcut(QKeySequence("Ctrl+Y"), self)
-        sc_redo.activated.connect(self._on_redo)
-        self._qt_shortcuts.append(sc_redo)
 
     # ================================================================== #
     # Timer
@@ -718,7 +899,7 @@ class MainWindowQt(QMainWindow):
         une fois le fichier prêt (ou en cas d'erreur).
         """
         # Annuler tout chargement précédent encore en cours
-        if self._loader_thread is not None and self._loader_thread.isRunning():  # pragma: no cover
+        if self._loader_thread is not None and self._loader_thread.isRunning():
             self._loader_thread.quit()
             self._loader_thread.wait(500)
 
@@ -779,6 +960,17 @@ class MainWindowQt(QMainWindow):
 
         # Réactiver l'UI
         self._set_ui_enabled(True)
+
+        # If pitch-preserving is enabled and tempo ≠ 100 % (or pitch ≠ 0),
+        # pre-compute the stretched/shifted buffer so the first playback
+        # block already uses the correct audio instead of falling back to
+        # raw tape-rate playback (which would sound wrong).
+        needs_preprocess = (
+            self.audio_player.get_pitch_preserving()
+            and (self.slider_tempo.value() != 100 or self.slider_pitch.value() != 0)
+        ) or self.slider_pitch.value() != 0
+        if needs_preprocess:
+            self._pitch_debounce_timer.start()
 
     def _on_audio_load_error(self, message: str) -> None:
         """Appelé dans le thread Qt principal en cas d'erreur de chargement."""
@@ -857,29 +1049,21 @@ class MainWindowQt(QMainWindow):
 
     def on_seek(self, value: int) -> None:
         self.audio_player.set_position(float(value))
-        # Announce the formatted time to screen readers so they speak
-        # "00:01:23" instead of the raw integer "83" from the slider range.
         duration = self.audio_player.get_duration()
         announce_text = (
             f"{self._format_time(value)} / {self._format_time(duration)}"
         )
         self.lbl_time.setText(announce_text)
-        self.slider_position.setAccessibleDescription(announce_text)
-        # Dynamically update the name so the formatted time is read when
-        # focus lands on the slider (in addition to the live announcement).
-        self.slider_position.setAccessibleName(
-            f"{tr('lbl_position').rstrip(':')} : {announce_text}"
-        )
-        try:
-            # Assertive priority pre-empts the raw integer ValueChange event
-            # announced by the AT, replacing it with the formatted time.
-            QAccessible.announce(
-                self.slider_position,
-                QAccessible.AnnouncementPriority.Assertive,
-                announce_text,
-            )
-        except AttributeError:
-            pass  # Qt < 6.8: description + name update above is the fallback
+        # The TimeSlider accessibility factory reads this property and
+        # exposes it as the slider's value to AT, so JAWS/NVDA speak
+        # "01:23 / 03:45" instead of the raw integer "83". We deliberately
+        # do NOT set accessibleDescription or call QAccessible.announce
+        # here — both would cause the screen reader to speak the value
+        # twice (once for the native ValueChange event, once for ours).
+        self.slider_position.setProperty("formattedTime", announce_text)
+        # accessibleName covers AT that read the name on focus enter but
+        # do not query the custom value (e.g. before any ValueChange event).
+        self.slider_position.setAccessibleName(f"Position {announce_text}")
 
     def _on_waveform_seek(self, seconds: float) -> None:
         """Seek triggered by clicking on the waveform widget."""
@@ -918,7 +1102,18 @@ class MainWindowQt(QMainWindow):
     def on_tempo_change(self, value: int) -> None:
         percentage = value / 100.0
         self.audio_player.set_tempo(percentage)
-        self.lbl_tempo_value.setText(f"{value}%")
+        announce_text = f"{value}%"
+        self.lbl_tempo_value.setText(announce_text)
+        self.slider_tempo.setAccessibleDescription(announce_text)
+        self.slider_tempo.setAccessibleName(
+            f"{tr('lbl_tempo').rstrip(':')} : {announce_text}"
+        )
+        if hasattr(QAccessible, "announce"):
+            QAccessible.announce(
+                self.slider_tempo,
+                QAccessible.AnnouncementPriority.Assertive,  # type: ignore[attr-defined]
+                announce_text,
+            )
         # Persist the tempo so it survives app restart.
         self.settings["last_tempo"] = value
         self._save_settings_timer.start()
@@ -927,13 +1122,30 @@ class MainWindowQt(QMainWindow):
             self._tempo_debounce_timer.start()
 
     def on_pitch_change(self, value: int) -> None:
-        """Pitch slider moved — apply shift after debounce."""
+        """Pitch slider moved — apply shift in real time."""
         self._pitch_semitones = float(value)
-        self.lbl_pitch_value.setText(f"{value:+d} st")
+        announce_text = f"{value:+d} st"
+        self.lbl_pitch_value.setText(announce_text)
+        self.slider_pitch.setAccessibleDescription(announce_text)
+        self.slider_pitch.setAccessibleName(
+            f"{tr('lbl_pitch').rstrip(':')} : {announce_text}"
+        )
+        if hasattr(QAccessible, "announce"):
+            QAccessible.announce(
+                self.slider_pitch,
+                QAccessible.AnnouncementPriority.Assertive,  # type: ignore[attr-defined]
+                announce_text,
+            )
         self.audio_player.set_pitch_semitones(float(value))
-        # Restart debounce timer so we fire only once after the user stops
-        # moving the slider (prevents concurrent pitch-shift threads).
-        self._pitch_debounce_timer.start()
+        # In tape mode, the playback worker applies pitch via real-time
+        # resampling — no pre-compute needed, no debounce. Only schedule
+        # the expensive librosa pitch_shift when pitch-preserving is on.
+        if self.audio_player.get_pitch_preserving():
+            self._pitch_debounce_timer.start()
+        else:
+            # Drop any stale pre-processed buffer so the worker falls back
+            # to the raw audio and the rate multiplier handles the shift.
+            self.audio_player.clear_processed_audio()
 
     def on_segment_selected(self, segment: Segment) -> None:
         """
@@ -1035,6 +1247,20 @@ class MainWindowQt(QMainWindow):
         self.segment_list_widget.refresh_list()
         self._on_segments_changed()
 
+    def _on_pitch_preserving_toggled(self, checked: bool) -> None:
+        """React to the pitch-preserving checkbox on the main UI."""
+        self.settings["pitch_preserving"] = bool(checked)
+        self.audio_player.set_pitch_preserving(bool(checked))
+        if self._save_settings_timer is not None:
+            self._save_settings_timer.start()
+        # When enabling, regenerate processed audio with time-stretch.
+        # When disabling, drop the processed buffer so tape mode kicks in.
+        if checked:
+            if self._pitch_debounce_timer is not None:
+                self._pitch_debounce_timer.start()
+        else:
+            self.audio_player.clear_processed_audio()
+
     def _on_undo(self) -> None:
         """Undo the last segment command (Ctrl+Z)."""
         if self._command_history.undo():
@@ -1067,6 +1293,12 @@ class MainWindowQt(QMainWindow):
         if not filename:
             return
         audio_data, sample_rate = self.audio_player.get_audio_snapshot()
+        if audio_data is None:
+            QMessageBox.critical(
+                self, tr("dlg_error_title"),
+                tr("dlg_err_export_wav", err="No audio loaded"),
+            )
+            return
         try:
             export_segment_wav(
                 audio_data,
@@ -1104,6 +1336,12 @@ class MainWindowQt(QMainWindow):
         if not filename:
             return
         audio_data, sample_rate = self.audio_player.get_audio_snapshot()
+        if audio_data is None:
+            QMessageBox.critical(
+                self, tr("dlg_error_title"),
+                tr("dlg_err_export_mp3", err="No audio loaded"),
+            )
+            return
         try:
             export_segment_mp3(
                 audio_data,
@@ -1151,7 +1389,7 @@ class MainWindowQt(QMainWindow):
                 self, tr("dlg_exported_title"), tr("dlg_config_saved", path=filename)
             )
             self.lbl_status.setText(tr("status_config_exported", path=filename))
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             QMessageBox.critical(
                 self, tr("dlg_error_title"), tr("dlg_err_export_config", err=exc)
             )
@@ -1166,7 +1404,7 @@ class MainWindowQt(QMainWindow):
         if not filename:
             return
         try:
-            with open(filename, "r", encoding="utf-8") as f:
+            with open(filename, encoding="utf-8") as f:
                 import_data = json.load(f)
             self.segment_manager = SegmentManager.from_dict(
                 {"segments": import_data.get("segments", [])}
@@ -1184,7 +1422,7 @@ class MainWindowQt(QMainWindow):
                 tr("status_config_imported",
                    count=len(self.segment_manager.list_segments()))
             )
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             QMessageBox.critical(
                 self, tr("dlg_error_title"), tr("dlg_err_import_config", err=exc)
             )
@@ -1209,7 +1447,7 @@ class MainWindowQt(QMainWindow):
                 self, tr("dlg_exported_title"), tr("dlg_segments_exported", path=filename)
             )
             self.lbl_status.setText(tr("status_segments_exported", path=filename))
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             QMessageBox.critical(
                 self, tr("dlg_error_title"), tr("dlg_err_export_segments", err=exc)
             )
@@ -1221,10 +1459,12 @@ class MainWindowQt(QMainWindow):
             save_settings(self.settings)
             self._apply_theme()
             self._configure_shortcuts()
-            # Apply pitch-preserving setting
-            self.audio_player.set_pitch_preserving(
-                bool(self.settings.get("pitch_preserving", False))
-            )
+            # Apply pitch-preserving setting and sync the main-window checkbox.
+            pp = bool(self.settings.get("pitch_preserving", False))
+            self.audio_player.set_pitch_preserving(pp)
+            self.chk_pitch_preserving.blockSignals(True)
+            self.chk_pitch_preserving.setChecked(pp)
+            self.chk_pitch_preserving.blockSignals(False)
 
     def _on_open_history(self) -> None:
         """Open the practice history dialog (Ctrl+H)."""
@@ -1240,6 +1480,8 @@ class MainWindowQt(QMainWindow):
         # Rebuild menu bar so all menu item labels are in the new language.
         self.menuBar().clear()
         self._build_menu_bar()
+        # Re-apply shortcuts to the freshly created menu QActions.
+        self._configure_shortcuts()
 
         # Retranslate this window and its children
         self.retranslate_ui()
@@ -1279,7 +1521,10 @@ class MainWindowQt(QMainWindow):
         dur_str = self._format_time(duration)
         accessible_value = f"{pos_str} sur {dur_str}"
         self.slider_position.setToolTip(accessible_value)
-        self.slider_position.setAccessibleDescription(accessible_value)
+        # Keep the custom accessible value in sync during playback so AT
+        # reads the current time if the user focuses the slider mid-play.
+        self.slider_position.setProperty("formattedTime", accessible_value)
+        self.slider_position.setAccessibleName(f"Position {accessible_value}")
 
         # Sync play/pause button with actual player state (e.g. natural end of track).
         actual_playing = self.audio_player.is_playing()
@@ -1374,7 +1619,7 @@ class MainWindowQt(QMainWindow):
         parts = elapsed_str.split(":")
         try:
             total_sec = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
-        except Exception:  # pragma: no cover
+        except Exception:
             total_sec = 0
         entry = PracticeHistory.make_entry(
             audio_file=str(self.current_audio_path),
@@ -1395,7 +1640,7 @@ class MainWindowQt(QMainWindow):
         _URL = "https://api.github.com/repos/aminekhettat/Back-Office-Player/releases/latest"
         try:
             req = _urlreq.Request(_URL, headers={"User-Agent": "BOP-update-checker/1.0"})
-            with _urlreq.urlopen(req, timeout=5) as resp:
+            with _urlreq.urlopen(req, timeout=5) as resp:  # nosec B310
                 data = json.loads(resp.read().decode())
             latest = data.get("tag_name", "")
             if latest and latest != _CURRENT_VERSION:
@@ -1403,8 +1648,8 @@ class MainWindowQt(QMainWindow):
                     0,
                     lambda: self.lbl_status.setText(tr("status_update", version=latest)),
                 )
-        except Exception:
-            pass
+        except Exception as exc:
+            _logger.debug("Update check failed: %s", exc)
 
     def _start_update_check(self) -> None:
         """Lance la vérification des mises à jour en arrière-plan."""
@@ -1415,7 +1660,7 @@ class MainWindowQt(QMainWindow):
     # ================================================================== #
     # Drag & drop
     # ================================================================== #
-    def dragEnterEvent(self, event) -> None:  # type: ignore[override]  # pragma: no cover
+    def dragEnterEvent(self, event) -> None:
         """
         Accept drag events that carry at least one local audio file.
 
@@ -1434,7 +1679,7 @@ class MainWindowQt(QMainWindow):
                         return
         event.ignore()
 
-    def dropEvent(self, event) -> None:  # type: ignore[override]  # pragma: no cover
+    def dropEvent(self, event) -> None:
         """Load the first dropped audio file."""
         if event.mimeData().hasUrls():
             for url in event.mimeData().urls():

@@ -49,7 +49,56 @@ version = { attr = "__version__.__version__" }
 where = ["."]
 include = ["core*", "infra*", "ui*"]
 
-# ── flake8 ──────────────────────────────────────────────────────────────────
+# ── Black ───────────────────────────────────────────────────────────────────
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+extend-exclude = '''
+/(
+    bopenv
+  | build
+  | dist
+  | docs/_build
+)/
+'''
+
+# ── isort ───────────────────────────────────────────────────────────────────
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["core", "infra", "ui"]
+skip = ["bopenv", "build", "dist", "docs/_build"]
+
+# ── Ruff (replaces Flake8 + plugins; fast) ──────────────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["bopenv", "build", "dist", "docs/_build"]
+
+[tool.ruff.lint]
+# E/W = pycodestyle, F = pyflakes, I = isort, B = bugbear,
+# UP = pyupgrade, SIM = simplify, PL = pylint subset, RUF = ruff-specific
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = [
+    "E501",   # line too long (Black handles it)
+    "E203",   # whitespace before ':' (Black style)
+    "B008",   # function calls in default args (Qt signals/slots pattern)
+    "SIM108", # ternary instead of if/else (sometimes less readable)
+    "RUF001", # ambiguous unicode in strings (intentional A-B loop en-dash notation)
+    "RUF002", # ambiguous unicode in docstrings (intentional A-B loop en-dash notation)
+    "RUF003", # ambiguous unicode in comments (intentional A-B loop en-dash notation)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "PLR2004"]   # assert + magic values OK in tests
+"tests/conftest.py" = ["E402"]     # imports must follow sys.path setup
+"tests/test_properties.py" = ["E402"]  # imports must follow hypothesis availability check
+"__version__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["core", "infra", "ui"]
+
+# ── flake8 (kept for contributors who still run it) ─────────────────────────
 [tool.flake8]
 max-line-length = 100
 extend-ignore = ["E501", "W503", "E203"]
@@ -62,10 +111,42 @@ strict = false
 warn_unused_ignores = true
 warn_return_any = true
 warn_unused_configs = true
+warn_redundant_casts = true
+warn_unreachable = true
+no_implicit_optional = true
+check_untyped_defs = true
 ignore_missing_imports = true
 exclude = ["bopenv/", "dist/", "build/", "docs/"]
+
+[[tool.mypy.overrides]]
+module = ["librosa.*", "sounddevice.*", "scipy.*"]
+ignore_missing_imports = true
+
+# ── Bandit (security) ───────────────────────────────────────────────────────
+[tool.bandit]
+exclude_dirs = ["bopenv", "tests", "build", "dist", "docs"]
+skips = ["B101"]  # assert_used — fine in dev / non-prod code
 
 # ── pytest ──────────────────────────────────────────────────────────────────
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-v"
+addopts = "-v --strict-markers"
+filterwarnings = [
+    "ignore::DeprecationWarning:librosa.*",
+    "ignore::DeprecationWarning:sounddevice.*",
+]
+
+# ── coverage ────────────────────────────────────────────────────────────────
+[tool.coverage.run]
+source = ["core", "infra", "ui"]
+omit = ["*/tests/*", "*/bopenv/*", "app.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+show_missing = true
+skip_covered = false

@@ -79,7 +79,7 @@ def test_persistence():
         assert meta_path is not None
         assert meta_path.exists()
 
-        with open(meta_path, "r", encoding="utf-8") as f:
+        with open(meta_path, encoding="utf-8") as f:
             data = json.load(f)
         assert "segments" in data
         assert len(data["segments"]) == 2
@@ -114,7 +114,7 @@ def test_config_export_import():
         assert config_path.exists()
         assert config_path.stat().st_size > 0
 
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             loaded_data = json.load(f)
 
         assert loaded_data["audio_file"] == "/path/to/song.mp3"

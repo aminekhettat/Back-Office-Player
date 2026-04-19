@@ -18,7 +18,6 @@ for structured music practice sessions.
 from __future__ import annotations
 
 import time
-from typing import Optional, Tuple
 
 
 class PracticeSession:
@@ -68,7 +67,7 @@ class PracticeSession:
 
         self._current_loop: int = 0
         self._current_tempo: float = tempo_start
-        self._session_start: Optional[float] = None
+        self._session_start: float | None = None
         self._active: bool = False
 
     # ------------------------------------------------------------------ #
@@ -106,7 +105,7 @@ class PracticeSession:
     # ------------------------------------------------------------------ #
     # Loop logic
     # ------------------------------------------------------------------ #
-    def on_loop_completed(self) -> Tuple[bool, float]:
+    def on_loop_completed(self) -> tuple[bool, float]:
         """
         Notify the session that one loop has finished.
 

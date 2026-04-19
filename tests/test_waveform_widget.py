@@ -15,11 +15,10 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtCore import Qt
 
 from core.segment import Segment
 from ui.waveform_widget import WaveformWidget
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -194,7 +193,7 @@ class TestMousePressEvent:
         """A left-click on the widget emits seek_requested with a float position."""
         with qtbot.waitSignal(loaded_widget.seek_requested, timeout=1000) as blocker:
             qtbot.mouseClick(
-                loaded_widget, Qt.LeftButton, pos=loaded_widget.rect().center()
+                loaded_widget, Qt.MouseButton.LeftButton, pos=loaded_widget.rect().center()
             )
         assert blocker.signal_triggered
         assert isinstance(blocker.args[0], float)
@@ -203,7 +202,7 @@ class TestMousePressEvent:
         """A left-click when duration=0 does not emit seek_requested."""
         received = []
         widget.seek_requested.connect(lambda v: received.append(v))
-        qtbot.mouseClick(widget, Qt.LeftButton, pos=widget.rect().center())
+        qtbot.mouseClick(widget, Qt.MouseButton.LeftButton, pos=widget.rect().center())
         assert received == []
 
     def test_seek_value_in_valid_range(self, loaded_widget, qtbot):
@@ -211,7 +210,7 @@ class TestMousePressEvent:
         received = []
         loaded_widget.seek_requested.connect(lambda v: received.append(v))
         qtbot.mouseClick(
-            loaded_widget, Qt.LeftButton, pos=loaded_widget.rect().center()
+            loaded_widget, Qt.MouseButton.LeftButton, pos=loaded_widget.rect().center()
         )
         assert len(received) == 1
         assert 0.0 <= received[0] <= loaded_widget._duration
@@ -248,7 +247,7 @@ class TestPaintEvent:
 class TestResizeEvent:
     def test_resize_recomputes_envelope(self, loaded_widget, qtbot):
         """Resizing the widget triggers _compute_envelope."""
-        old_envelope_len = len(loaded_widget._envelope) if loaded_widget._envelope is not None else 0
+        len(loaded_widget._envelope) if loaded_widget._envelope is not None else 0
         loaded_widget.resize(800, 100)
         # Envelope may change length as width changed
         assert loaded_widget._envelope is not None
@@ -277,3 +276,25 @@ class TestComputeEnvelope:
         # max_val == 0, so normalisation is skipped
         assert widget._envelope is not None
         assert float(widget._envelope.max()) == pytest.approx(0.0)
+
+    def test_empty_chunk_gives_rms_zero(self, widget):
+        """_compute_envelope produces rms=0.0 for an empty chunk (line 203).
+
+        Uses a fake audio object whose slices always return an empty array.
+        The length is reported consistently as 400 so the loop runs once per
+        frame and every chunk is empty → else: rms = 0.0 is executed.
+        """
+
+        class _EmptySliceAudio:
+            """Fake audio whose slices are always empty but len is 400."""
+
+            def __len__(self) -> int:
+                return 400
+
+            def __getitem__(self, key) -> np.ndarray:
+                return np.array([], dtype=np.float32)
+
+        widget._audio = _EmptySliceAudio()
+        widget._compute_envelope()
+        assert widget._envelope is not None
+        assert float(widget._envelope[0]) == pytest.approx(0.0)

@@ -11,14 +11,12 @@ Covers: PracticeHistoryEntry.to_dict / from_dict, PracticeHistory.get_sessions
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
 from infra.practice_history import PracticeHistory, PracticeHistoryEntry
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -41,7 +39,7 @@ def _entry(**kwargs) -> PracticeHistoryEntry:
         notes="",
     )
     defaults.update(kwargs)
-    return PracticeHistoryEntry(**defaults)
+    return PracticeHistoryEntry(**defaults)  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------
@@ -210,7 +208,6 @@ class TestMakeEntry:
 class TestDefaultDataDir:
     def test_instantiation_without_data_dir(self, monkeypatch, tmp_path):
         """PracticeHistory can be created without a data_dir argument."""
-        from platformdirs import user_data_dir
         monkeypatch.setattr(
             "infra.practice_history.user_data_dir",
             lambda *a, **k: str(tmp_path),

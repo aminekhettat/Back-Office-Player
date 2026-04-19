@@ -15,12 +15,10 @@ colour/notes/tooltip branches.
 from __future__ import annotations
 
 import pytest
-from unittest.mock import MagicMock
 
 from core.segment import Segment
 from core.segment_manager import SegmentManager
 from ui.segment_list_widget import SegmentListWidget
-
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures

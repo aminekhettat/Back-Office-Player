@@ -15,10 +15,8 @@ import threading
 from unittest.mock import patch
 
 import numpy as np
-import pytest
 
 from core.pitch_engine import PitchEngine
-
 
 # ---------------------------------------------------------------------------
 # Helper: run a PitchEngine call synchronously

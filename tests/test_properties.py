@@ -19,7 +19,8 @@ from __future__ import annotations
 import pytest
 
 try:
-    from hypothesis import assume, given, settings as h_settings
+    from hypothesis import given
+    from hypothesis import settings as h_settings
     from hypothesis import strategies as st
 
     _HYPOTHESIS_AVAILABLE = True
@@ -32,10 +33,9 @@ if not _HYPOTHESIS_AVAILABLE:  # pragma: no cover
     pytest.skip("hypothesis not installed — run: pip install hypothesis",
                 allow_module_level=True)
 
-from core.commands import AddSegmentCommand, CommandHistory, RemoveSegmentCommand
+from core.commands import AddSegmentCommand, CommandHistory
 from core.segment import Segment
 from core.segment_manager import SegmentManager
-
 
 # ---------------------------------------------------------------------------
 # Hypothesis strategies

@@ -9,13 +9,13 @@ Import this module wherever the version string is needed::
 :organization: BLIND SYSTEMS
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
-:version: 1.1.3
+:version: 2.0.0
 :disclaimer: Distributed on an "AS IS" basis, WITHOUT WARRANTIES OR
              CONDITIONS OF ANY KIND. See the LICENSE file for the full
              terms of the Apache License, Version 2.0.
 """
 
-__version__ = "1.1.4"
+__version__ = "2.0.0"
 __author__ = "Amine Khettat"
 __organization__ = "BLIND SYSTEMS"
 __license__ = "Apache-2.0"

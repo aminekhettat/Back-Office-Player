@@ -16,7 +16,6 @@ import pytest
 from core.segment import Segment
 from core.segment_manager import SegmentManager
 
-
 # ── Segment ────────────────────────────────────────────────────────────
 
 class TestSegmentDuration:

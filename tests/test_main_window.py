@@ -19,6 +19,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
+from PySide6.QtCore import Qt
 
 from core.audio_player_native import AudioPlayer
 from core.segment import Segment
@@ -136,7 +137,7 @@ class TestMainWindowCreation:
 class TestOnOpenFile:
     def test_cancelled_dialog_does_not_load(self, window, monkeypatch):
         """Cancelling the file dialog does nothing."""
-        w, player = window
+        w, _player = window
         monkeypatch.setattr(
             "PySide6.QtWidgets.QFileDialog.getOpenFileName",
             lambda *a, **k: ("", ""),
@@ -146,7 +147,7 @@ class TestOnOpenFile:
 
     def test_valid_dialog_calls_load(self, window, monkeypatch, tmp_path):
         """File dialog returning a path calls _load_audio_file."""
-        w, player = window
+        w, _player = window
         audio_file = str(tmp_path / "test.mp3")
         monkeypatch.setattr(
             "PySide6.QtWidgets.QFileDialog.getOpenFileName",
@@ -164,7 +165,7 @@ class TestOnOpenFile:
         captured = []
         monkeypatch.setattr(
             "PySide6.QtWidgets.QFileDialog.getOpenFileName",
-            lambda parent, title, dir_, filter_: captured.append(dir_) or ("", ""),
+            lambda parent, title, dir_, filter_: captured.append(dir_) or ("", ""),  # type: ignore[func-returns-value]
         )
         w.on_open_file()
         assert captured[0] == str(tmp_path)
@@ -176,7 +177,7 @@ class TestOnOpenFile:
         captured = []
         monkeypatch.setattr(
             "PySide6.QtWidgets.QFileDialog.getOpenFileName",
-            lambda parent, title, dir_, filter_: captured.append(dir_) or ("", ""),
+            lambda parent, title, dir_, filter_: captured.append(dir_) or ("", ""),  # type: ignore[func-returns-value]
         )
         w.on_open_file()
         assert captured[0] == str(Path.home())
@@ -294,14 +295,14 @@ class TestPlaybackControls:
 
     def test_play_no_progressive_tempo_keeps_slider(self, window):
         """on_play() does NOT reset tempo slider when progressive tempo is off."""
-        w, player = window
+        w, _player = window
         w.slider_tempo.setValue(130)
         w.on_play()
         assert w.slider_tempo.value() == 130
 
     def test_play_with_progressive_tempo_resets_slider(self, window):
         """on_play() resets tempo slider to session start value when progressive."""
-        w, player = window
+        w, _player = window
         w.slider_tempo.setValue(130)
         # Configure progressive mode in the practice panel
         w.practice_panel.chk_progressive.setChecked(True)
@@ -329,13 +330,14 @@ class TestVolumeAndSeek:
         w.on_seek(30)
         player.set_position.assert_called_with(30.0)
 
-    def test_on_seek_updates_accessible_description(self, window):
-        """on_seek() updates the slider accessible description with formatted time."""
+    def test_on_seek_updates_accessible_name(self, window):
+        """on_seek() updates the slider accessible name and formattedTime property."""
         w, player = window
         player.get_duration.return_value = 120.0
         w.on_seek(65)
-        desc = w.slider_position.accessibleDescription()
-        assert "01:05" in desc  # 65 s = 1 min 5 s
+        name = w.slider_position.accessibleName()
+        assert "01:05" in name  # 65 s = 1 min 5 s
+        assert w.slider_position.property("formattedTime") is not None
 
     def test_on_seek_updates_lbl_time(self, window):
         """on_seek() immediately updates the time label so it stays in sync with the slider."""
@@ -366,7 +368,7 @@ class TestABLoopControls:
 
     def test_on_clear_points(self, window):
         """on_clear_points resets point_a, point_b and loop_enabled."""
-        w, player = window
+        w, _player = window
         w.point_a = 1.0
         w.point_b = 5.0
         w.loop_enabled = True
@@ -720,20 +722,19 @@ class TestUpdatePosition:
 class TestHandleLoopEnd:
     def test_handle_loop_end_no_session(self, window):
         """_handle_loop_end with no active session still calls _do_loop_jump."""
-        w, player = window
+        w, _player = window
         w.point_a = 1.0
         w.point_b = 5.0
         # No practice session active — get_active_session returns None
         w.practice_panel.reset_session()
         called = []
-        orig = w._do_loop_jump
         w._do_loop_jump = lambda: called.append(1)
         w._handle_loop_end()
         assert called
 
     def test_handle_loop_end_session_stops(self, window, monkeypatch):
         """_handle_loop_end stops session when should_stop is True."""
-        w, player = window
+        w, _player = window
         w.point_a = 1.0
         w.point_b = 5.0
         w.current_audio_path = Path("/fake.mp3")
@@ -749,7 +750,7 @@ class TestHandleLoopEnd:
 
     def test_handle_loop_end_progressive_tempo(self, window):
         """_handle_loop_end updates tempo slider with new_tempo from session."""
-        w, player = window
+        w, _player = window
         w.point_a = 1.0
         w.point_b = 5.0
         w.practice_panel.spn_loop_count.setValue(0)  # infinite
@@ -765,7 +766,7 @@ class TestHandleLoopEnd:
 
     def test_handle_loop_end_with_delay(self, window):
         """_handle_loop_end with loop_delay > 0 uses QTimer.singleShot."""
-        w, player = window
+        w, _player = window
         w.point_a = 1.0
         w.point_b = 5.0
         w.practice_panel.spn_loop_delay.setValue(0.1)
@@ -934,7 +935,7 @@ class TestOpenRecent:
 
     def test_open_recent_success(self, window, monkeypatch, tmp_path):
         """_open_recent loads the file when it exists."""
-        w, player = window
+        w, _player = window
         f = tmp_path / "real.mp3"
         f.touch()
         calls = []
@@ -1106,7 +1107,7 @@ class TestExportSegmentAudio:
 
     def test_export_wav_cancelled_is_noop(self, window, monkeypatch):
         """_on_export_segment_wav does nothing when dialog is cancelled."""
-        w, player = window
+        w, _player = window
         monkeypatch.setattr(
             "PySide6.QtWidgets.QFileDialog.getSaveFileName",
             lambda *a, **k: ("", ""),
@@ -1124,7 +1125,7 @@ class TestExportSegmentAudio:
         monkeypatch.setattr(
             "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
         )
-        player.get_audio_snapshot.return_value = (None, 44100)
+        player.get_audio_snapshot.return_value = (np.zeros(100, dtype=np.float32), 44100)
         with patch("ui.main_window.export_segment_wav"):
             w._on_export_segment_wav(self._seg())
 
@@ -1140,14 +1141,14 @@ class TestExportSegmentAudio:
         monkeypatch.setattr(
             "PySide6.QtWidgets.QMessageBox.critical", lambda *a, **k: shown.append(1)
         )
-        player.get_audio_snapshot.return_value = (None, 44100)
+        player.get_audio_snapshot.return_value = (np.zeros(100, dtype=np.float32), 44100)
         with patch("ui.main_window.export_segment_wav", side_effect=OSError("write error")):
             w._on_export_segment_wav(self._seg())
         assert shown
 
     def test_export_mp3_cancelled_is_noop(self, window, monkeypatch):
         """_on_export_segment_mp3 does nothing when dialog is cancelled."""
-        w, player = window
+        w, _player = window
         monkeypatch.setattr(
             "PySide6.QtWidgets.QFileDialog.getSaveFileName",
             lambda *a, **k: ("", ""),
@@ -1165,7 +1166,7 @@ class TestExportSegmentAudio:
         monkeypatch.setattr(
             "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
         )
-        player.get_audio_snapshot.return_value = (None, 44100)
+        player.get_audio_snapshot.return_value = (np.zeros(100, dtype=np.float32), 44100)
         with patch("ui.main_window.export_segment_mp3"):
             w._on_export_segment_mp3(self._seg())
 
@@ -1181,7 +1182,7 @@ class TestExportSegmentAudio:
         monkeypatch.setattr(
             "PySide6.QtWidgets.QMessageBox.critical", lambda *a, **k: shown.append(1)
         )
-        player.get_audio_snapshot.return_value = (None, 44100)
+        player.get_audio_snapshot.return_value = (np.zeros(100, dtype=np.float32), 44100)
         with patch("ui.main_window.export_segment_mp3", side_effect=OSError("write error")):
             w._on_export_segment_mp3(self._seg())
         assert shown
@@ -1215,3 +1216,457 @@ class TestHistoryAndLanguage:
         assert w.settings.get("language") == "en"
         assert w.act_lang_en.isChecked()
         assert not w.act_lang_fr.isChecked()
+
+
+# ---------------------------------------------------------------------------
+# _TimeSliderAccessible — text() with formattedTime property
+# ---------------------------------------------------------------------------
+
+class TestTimeSliderAccessible:
+    def test_text_returns_formatted_time_when_set(self, qtbot):
+        """_TimeSliderAccessible.text() returns the formattedTime property (lines 121-127)."""
+        from PySide6.QtGui import QAccessible
+
+        from ui.main_window import TimeSlider, _TimeSliderAccessible
+
+        slider = TimeSlider(Qt.Orientation.Horizontal)
+        qtbot.addWidget(slider)
+        slider.setProperty("formattedTime", "01:23 / 05:00")
+
+        acc = _TimeSliderAccessible(slider)
+        result = acc.text(QAccessible.Text.Value)
+        assert result == "01:23 / 05:00"
+
+    def test_text_description_returns_formatted_time(self, qtbot):
+        """_TimeSliderAccessible.text() also responds to Description role."""
+        from PySide6.QtGui import QAccessible
+
+        from ui.main_window import TimeSlider, _TimeSliderAccessible
+
+        slider = TimeSlider(Qt.Orientation.Horizontal)
+        qtbot.addWidget(slider)
+        slider.setProperty("formattedTime", "00:30 / 02:00")
+
+        acc = _TimeSliderAccessible(slider)
+        result = acc.text(QAccessible.Text.Description)
+        assert result == "00:30 / 02:00"
+
+    def test_text_falls_back_to_super_when_no_property(self, qtbot):
+        """_TimeSliderAccessible.text() falls back to super() when formattedTime is unset."""
+        from PySide6.QtGui import QAccessible
+
+        from ui.main_window import TimeSlider, _TimeSliderAccessible
+
+        slider = TimeSlider(Qt.Orientation.Horizontal)
+        qtbot.addWidget(slider)
+        # formattedTime property NOT set — should not return a custom string.
+
+        acc = _TimeSliderAccessible(slider)
+        result = acc.text(QAccessible.Text.Value)
+        # super().text() returns empty string by default for a slider with no value text
+        # We just verify no exception is raised.
+        assert isinstance(result, str)
+
+
+# ---------------------------------------------------------------------------
+# _on_about — French and English dialogs
+# ---------------------------------------------------------------------------
+
+class TestAboutDialog:
+    def test_on_about_english(self, window, monkeypatch):
+        """_on_about() shows the English about dialog (lines 709-729)."""
+        w, _ = window
+        monkeypatch.setattr("ui.main_window.get_language", lambda: "en")
+        shown: list[str] = []
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QMessageBox.about",
+            lambda parent, title, text: shown.append(text),
+        )
+        w._on_about()
+        assert shown
+        assert "BLIND SYSTEMS" in shown[0]
+
+    def test_on_about_french(self, window, monkeypatch):
+        """_on_about() shows the French about dialog (lines 709-729)."""
+        w, _ = window
+        monkeypatch.setattr("ui.main_window.get_language", lambda: "fr")
+        shown: list[str] = []
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QMessageBox.about",
+            lambda parent, title, text: shown.append(text),
+        )
+        w._on_about()
+        assert shown
+        assert "BLIND SYSTEMS" in shown[0]
+
+
+# ---------------------------------------------------------------------------
+# _load_audio_file — cancel existing loader thread
+# ---------------------------------------------------------------------------
+
+class TestLoadAudioFileCancelsRunning:
+    def test_load_cancels_running_loader_thread(self, window, tmp_path):
+        """_load_audio_file quits a still-running loader thread (lines 903-904)."""
+        w, _ = window
+        mock_thread = MagicMock()
+        mock_thread.isRunning.return_value = True
+        w._loader_thread = mock_thread
+
+        path = tmp_path / "f.mp3"
+        path.touch()
+
+        with patch("ui.main_window.AudioLoaderThread") as MockALT:
+            instance = MagicMock()
+            instance.isRunning.return_value = False
+            MockALT.return_value = instance
+            w._load_audio_file(path)
+
+        mock_thread.quit.assert_called_once()
+        mock_thread.wait.assert_called_once_with(500)
+
+
+# ---------------------------------------------------------------------------
+# _on_audio_loaded — pitch-debounce timer when needs_preprocess (line 973)
+# ---------------------------------------------------------------------------
+
+class TestOnAudioLoadedPitchDebounce:
+    def test_pitch_debounce_started_when_pitch_nonzero(self, window, tmp_path, monkeypatch):
+        """_on_audio_loaded starts the pitch debounce timer when pitch slider != 0 (line 973)."""
+        w, player = window
+        player.get_pitch_preserving.return_value = False
+        # Force pitch slider to non-zero without triggering signals.
+        w.slider_pitch.blockSignals(True)
+        w.slider_pitch.setValue(3)
+        w.slider_pitch.blockSignals(False)
+
+        timer_starts: list[int] = []
+        orig_start = w._pitch_debounce_timer.start
+        w._pitch_debounce_timer.start = lambda *a: timer_starts.append(1) or orig_start(*a)  # type: ignore[func-returns-value]
+
+        path = tmp_path / "f.mp3"
+        path.touch()
+
+        with (
+            patch("infra.persistence.load_segments", return_value=SegmentManager()),
+            patch("infra.settings.save_settings"),
+            patch("ui.main_window.add_recent_file"),
+        ):
+            w._on_audio_loaded(path)
+
+        assert timer_starts
+
+
+# ---------------------------------------------------------------------------
+# on_tempo_change — QAccessible.announce branch
+# ---------------------------------------------------------------------------
+
+class TestQAccessibleAnnounce:
+    def test_tempo_change_calls_announce_when_available(self, window):
+        """on_tempo_change calls QAccessible.announce when the method exists (line 1112)."""
+        import ui.main_window as mw_mod
+
+        w, player = window
+        player.get_pitch_preserving.return_value = False
+
+        announce_calls: list = []
+        fake_accessible = MagicMock()
+        fake_accessible.announce = MagicMock(side_effect=lambda *a: announce_calls.append(a))
+        fake_accessible.AnnouncementPriority = MagicMock()
+        fake_accessible.AnnouncementPriority.Assertive = "Assertive"
+
+        with patch.object(mw_mod, "QAccessible", fake_accessible):
+            w.on_tempo_change(80)
+
+        assert announce_calls
+
+    def test_pitch_change_calls_announce_when_available(self, window):
+        """on_pitch_change calls QAccessible.announce when the method exists (line 1134)."""
+        import ui.main_window as mw_mod
+
+        w, player = window
+        player.get_pitch_preserving.return_value = False
+
+        announce_calls: list = []
+        fake_accessible = MagicMock()
+        fake_accessible.announce = MagicMock(side_effect=lambda *a: announce_calls.append(a))
+        fake_accessible.AnnouncementPriority = MagicMock()
+        fake_accessible.AnnouncementPriority.Assertive = "Assertive"
+
+        with patch.object(mw_mod, "QAccessible", fake_accessible):
+            w.on_pitch_change(2)
+
+        assert announce_calls
+
+
+# ---------------------------------------------------------------------------
+# on_pitch_change — pitch-preserving starts debounce timer (line 1144)
+# ---------------------------------------------------------------------------
+
+class TestPitchChangeWithPreserving:
+    def test_pitch_change_with_pitch_preserving_starts_debounce(self, window):
+        """on_pitch_change starts the pitch debounce timer when pitch-preserving is on (line 1144)."""
+        w, player = window
+        player.get_pitch_preserving.return_value = True
+
+        timer_starts: list[int] = []
+        orig = w._pitch_debounce_timer.start
+        w._pitch_debounce_timer.start = lambda *a: timer_starts.append(1) or orig(*a)  # type: ignore[func-returns-value]
+
+        w.on_pitch_change(2)
+
+        assert timer_starts
+
+
+# ---------------------------------------------------------------------------
+# _on_pitch_preserving_toggled — both branches
+# ---------------------------------------------------------------------------
+
+class TestPitchPreservingToggled:
+    def test_toggled_true_calls_set_pitch_preserving_and_starts_timer(self, window):
+        """_on_pitch_preserving_toggled(True) enables pitch-preserving and starts debounce (lines 1252-1262)."""
+        w, player = window
+        timer_starts: list[int] = []
+        orig = w._pitch_debounce_timer.start
+        w._pitch_debounce_timer.start = lambda *a: timer_starts.append(1) or orig(*a)  # type: ignore[func-returns-value]
+
+        w._on_pitch_preserving_toggled(True)
+
+        player.set_pitch_preserving.assert_called_with(True)
+        assert timer_starts
+
+    def test_toggled_false_calls_clear_processed_audio(self, window):
+        """_on_pitch_preserving_toggled(False) disables pitch-preserving and drops buffer (lines 1252-1262)."""
+        w, player = window
+        w._on_pitch_preserving_toggled(False)
+        player.set_pitch_preserving.assert_called_with(False)
+        player.clear_processed_audio.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# _on_export_segment_wav / _on_export_segment_mp3 — no audio loaded
+# ---------------------------------------------------------------------------
+
+class TestExportNoAudio:
+    def _seg(self):
+        return Segment(name="S", start_sec=0.0, end_sec=1.0)
+
+    def test_export_wav_no_audio_shows_critical(self, window, monkeypatch, tmp_path):
+        """_on_export_segment_wav shows a critical dialog when no audio is loaded (lines 1297-1301)."""
+        w, player = window
+        out = str(tmp_path / "out.wav")
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QFileDialog.getSaveFileName",
+            lambda *a, **k: (out, "WAV"),
+        )
+        shown: list[int] = []
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QMessageBox.critical",
+            lambda *a, **k: shown.append(1),
+        )
+        player.get_audio_snapshot.return_value = (None, 44100)
+        w._on_export_segment_wav(self._seg())
+        assert shown
+
+    def test_export_mp3_no_audio_shows_critical(self, window, monkeypatch, tmp_path):
+        """_on_export_segment_mp3 shows a critical dialog when no audio is loaded (lines 1340-1344)."""
+        w, player = window
+        out = str(tmp_path / "out.mp3")
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QFileDialog.getSaveFileName",
+            lambda *a, **k: (out, "MP3"),
+        )
+        shown: list[int] = []
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QMessageBox.critical",
+            lambda *a, **k: shown.append(1),
+        )
+        player.get_audio_snapshot.return_value = (None, 44100)
+        w._on_export_segment_mp3(self._seg())
+        assert shown
+
+
+# ---------------------------------------------------------------------------
+# on_export_config / on_import_config / on_export_segments_csv — exception handlers
+# ---------------------------------------------------------------------------
+
+class TestExceptionHandlers:
+    def test_export_config_exception_shows_critical(self, window, monkeypatch, tmp_path):
+        """on_export_config shows critical dialog on write error (lines 1392-1393)."""
+        w, _ = window
+        out = str(tmp_path / "out.bop")
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QFileDialog.getSaveFileName",
+            lambda *a, **k: (out, "BOP"),
+        )
+        shown: list[int] = []
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QMessageBox.critical",
+            lambda *a, **k: shown.append(1),
+        )
+        with patch("builtins.open", side_effect=PermissionError("no write")):
+            w.on_export_config()
+        assert shown
+
+    def test_import_config_invalid_json_shows_critical(self, window, monkeypatch, tmp_path):
+        """on_import_config shows critical dialog on JSON parse error (lines 1425-1426)."""
+        w, _ = window
+        bad_file = tmp_path / "bad.bop"
+        bad_file.write_text("not valid json", encoding="utf-8")
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QFileDialog.getOpenFileName",
+            lambda *a, **k: (str(bad_file), "BOP"),
+        )
+        shown: list[int] = []
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QMessageBox.critical",
+            lambda *a, **k: shown.append(1),
+        )
+        w.on_import_config()
+        assert shown
+
+    def test_export_segments_csv_exception_shows_critical(self, window, monkeypatch, tmp_path):
+        """on_export_segments_csv shows critical dialog on write error (lines 1450-1451)."""
+        w, _ = window
+        out = str(tmp_path / "out.csv")
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QFileDialog.getSaveFileName",
+            lambda *a, **k: (out, "CSV"),
+        )
+        shown: list[int] = []
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QMessageBox.critical",
+            lambda *a, **k: shown.append(1),
+        )
+        with patch("ui.main_window.export_segments_text", side_effect=OSError("write error")):
+            w.on_export_segments_csv()
+        assert shown
+
+
+# ---------------------------------------------------------------------------
+# _save_practice_history — invalid elapsed string
+# ---------------------------------------------------------------------------
+
+class TestSavePracticeHistoryInvalidElapsed:
+    def test_invalid_elapsed_defaults_to_zero(self, window, tmp_path):
+        """_save_practice_history defaults duration to 0 on parse error (lines 1622-1623)."""
+        w, _ = window
+        w._session_loop_count = 2
+        w._session_tempo_sum = 1.8
+        w.current_audio_path = tmp_path / "song.mp3"
+        w.practice_panel.start_session()
+        session = w.practice_panel.get_active_session()
+        assert session is not None
+
+        entries: list = []
+        with (
+            patch.object(session, "get_elapsed", return_value="bad:format:!"),
+            patch.object(w._practice_history, "add_session", side_effect=entries.append),
+        ):
+            w._save_practice_history()
+
+        assert len(entries) == 1
+        entry = entries[0]
+        # duration_seconds should be 0 due to parse error
+        assert entry.duration_seconds == pytest.approx(0.0)
+
+
+# ---------------------------------------------------------------------------
+# dragEnterEvent / dropEvent
+# ---------------------------------------------------------------------------
+
+class TestDragDropEvents:
+    def test_drag_enter_audio_file_accepted(self, window):
+        """dragEnterEvent accepts a valid local audio URL (lines 1670-1680)."""
+        from PySide6.QtCore import QUrl
+
+        w, _ = window
+        url = QUrl.fromLocalFile("/music/track.mp3")
+
+        event = MagicMock()
+        mime = MagicMock()
+        mime.hasUrls.return_value = True
+        mime.urls.return_value = [url]
+        event.mimeData.return_value = mime
+
+        w.dragEnterEvent(event)
+        event.acceptProposedAction.assert_called_once()
+
+    def test_drag_enter_non_audio_file_ignored(self, window):
+        """dragEnterEvent ignores a non-audio file URL (lines 1670-1680)."""
+        from PySide6.QtCore import QUrl
+
+        w, _ = window
+        url = QUrl.fromLocalFile("/docs/readme.txt")
+
+        event = MagicMock()
+        mime = MagicMock()
+        mime.hasUrls.return_value = True
+        mime.urls.return_value = [url]
+        event.mimeData.return_value = mime
+
+        w.dragEnterEvent(event)
+        event.ignore.assert_called_once()
+
+    def test_drag_enter_no_urls_ignored(self, window):
+        """dragEnterEvent ignores drag events with no URLs (lines 1670-1680)."""
+        w, _ = window
+
+        event = MagicMock()
+        mime = MagicMock()
+        mime.hasUrls.return_value = False
+        event.mimeData.return_value = mime
+
+        w.dragEnterEvent(event)
+        event.ignore.assert_called_once()
+
+    def test_drop_event_audio_file_loads_file(self, window, monkeypatch, tmp_path):
+        """dropEvent loads the dropped audio file (lines 1684-1696)."""
+        from PySide6.QtCore import QUrl
+
+        w, _ = window
+        audio_file = tmp_path / "song.flac"
+        audio_file.touch()
+        url = QUrl.fromLocalFile(str(audio_file))
+
+        event = MagicMock()
+        mime = MagicMock()
+        mime.hasUrls.return_value = True
+        mime.urls.return_value = [url]
+        event.mimeData.return_value = mime
+
+        load_calls: list = []
+        monkeypatch.setattr(w, "_load_audio_file", lambda p: load_calls.append(p))
+
+        w.dropEvent(event)
+        event.acceptProposedAction.assert_called_once()
+        assert load_calls
+
+    def test_drop_event_non_audio_ignored(self, window, tmp_path):
+        """dropEvent ignores non-audio files (lines 1684-1696)."""
+        from PySide6.QtCore import QUrl
+
+        w, _ = window
+        text_file = tmp_path / "notes.txt"
+        text_file.touch()
+        url = QUrl.fromLocalFile(str(text_file))
+
+        event = MagicMock()
+        mime = MagicMock()
+        mime.hasUrls.return_value = True
+        mime.urls.return_value = [url]
+        event.mimeData.return_value = mime
+
+        w.dropEvent(event)
+        event.ignore.assert_called_once()
+
+    def test_drop_event_no_urls_ignored(self, window):
+        """dropEvent ignores drop events with no URLs (lines 1684-1696)."""
+        w, _ = window
+
+        event = MagicMock()
+        mime = MagicMock()
+        mime.hasUrls.return_value = False
+        event.mimeData.return_value = mime
+
+        w.dropEvent(event)
+        event.ignore.assert_called_once()

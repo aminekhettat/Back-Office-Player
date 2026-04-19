@@ -16,7 +16,7 @@ Features
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2026-04-19
-:version: 1.1.3
+:version: 1.1.4
 :disclaimer: Distributed on an "AS IS" basis, WITHOUT WARRANTIES OR
              CONDITIONS OF ANY KIND. See the LICENSE file for the full
              terms of the Apache License, Version 2.0.
@@ -28,14 +28,14 @@ import json
 import logging
 import shutil
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from platformdirs import user_data_dir
 
 _logger = logging.getLogger(__name__)
 
 # Default application settings.
-DEFAULT_SETTINGS: Dict[str, Any] = {
+DEFAULT_SETTINGS: dict[str, Any] = {
     "last_opened_folder": "",
     "default_volume": 80,
     "recent_files": [],
@@ -49,8 +49,8 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "position_announce_interval": 5,
     "shortcuts": {
         "open": "Ctrl+O",
-        "play_pause": "Space",
-        "play": "Ctrl+P",
+        "play_pause": "Ctrl+P",
+        "play": "",
         "pause": "Ctrl+Shift+P",
         "stop": "Ctrl+S",
         "set_a": "Ctrl+Shift+A",
@@ -96,7 +96,7 @@ def get_settings_path() -> Path:
     return new_path
 
 
-def _deep_merge(base: Dict[str, Any], update: Dict[str, Any]) -> Dict[str, Any]:
+def _deep_merge(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
     """
     Recursively merge *update* into *base*.
 
@@ -128,7 +128,7 @@ def _deep_merge(base: Dict[str, Any], update: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def load_settings() -> Dict[str, Any]:
+def load_settings() -> dict[str, Any]:
     """
     Load application settings from the JSON file.
 
@@ -150,7 +150,7 @@ def load_settings() -> Dict[str, Any]:
         return _deep_merge(DEFAULT_SETTINGS, {})
 
 
-def save_settings(settings: Dict[str, Any]) -> None:
+def save_settings(settings: dict[str, Any]) -> None:
     """
     Save application settings to the JSON file.
 
@@ -169,7 +169,7 @@ def save_settings(settings: Dict[str, Any]) -> None:
 
 
 def add_recent_file(
-    settings: Dict[str, Any], path: str, max_files: int = 10
+    settings: dict[str, Any], path: str, max_files: int = 10
 ) -> None:
     """
     Prepend *path* to ``settings["recent_files"]``, keeping at most
@@ -184,7 +184,7 @@ def add_recent_file(
     max_files : int
         Maximum number of recent files to keep.
     """
-    recent: List[str] = settings.get("recent_files", [])
+    recent: list[str] = settings.get("recent_files", [])
     if path in recent:
         recent.remove(path)
     recent.insert(0, path)

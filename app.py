@@ -1,6 +1,5 @@
 """
 Application entry point for Back-Office Player (PySide6).
-
 Initialises the main components (AudioPlayer, SegmentManager, MainWindowQt)
 and starts the PySide6 Qt event loop.
 
@@ -9,7 +8,7 @@ and starts the PySide6 Qt event loop.
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2026-04-19
-:version: 1.1.3
+:version: 2.0.0
 :disclaimer: Distributed on an "AS IS" basis, WITHOUT WARRANTIES OR
              CONDITIONS OF ANY KIND. See the LICENSE file for the full
              terms of the Apache License, Version 2.0.
@@ -20,8 +19,8 @@ from __future__ import annotations
 import logging
 import sys
 
-from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication
 
 from __version__ import __version__
 from core.audio_player_native import AudioPlayer

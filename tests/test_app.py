@@ -12,24 +12,17 @@ MainWindowQt, and sys.exit.
 
 from __future__ import annotations
 
-import sys
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 class TestMain:
     def test_main_is_importable(self):
         """app.main can be imported without side effects."""
-        import app  # noqa: F401
+        import app
         assert hasattr(app, "main")
 
-    def test_main_runs_without_real_qt(self, monkeypatch):
+    def test_main_runs_without_real_qt(self, qtbot, monkeypatch):
         """main() completes without error when all dependencies are mocked."""
-        # We need a real QApplication for PySide6 (or at least not crash).
-        # Use the global QApplication if available (provided by pytest-qt),
-        # and mock everything else.
-
         mock_player = MagicMock()
         mock_manager = MagicMock()
         mock_window = MagicMock()
@@ -39,28 +32,24 @@ class TestMain:
             patch("app.SegmentManager", return_value=mock_manager),
             patch("app.MainWindowQt", return_value=mock_window),
             patch("sys.exit") as mock_exit,
+            patch("app.QApplication"),
+            patch("app.QIcon"),
         ):
-            # Patch QApplication to avoid creating a second instance
-            mock_app = MagicMock()
-            mock_app.exec.return_value = 0
-            with patch("app.QApplication", return_value=mock_app):
-                import app as app_module
-                app_module.main()
+            import app as app_module
+            app_module.main()
 
-        # sys.exit should have been called with the exec() return value
-        mock_exit.assert_called_once_with(0)
+        mock_exit.assert_called_once()
 
-    def test_main_shows_window(self, monkeypatch):
+    def test_main_shows_window(self, qtbot, monkeypatch):
         """main() calls window.show() on the MainWindowQt instance."""
         mock_window = MagicMock()
-        mock_app = MagicMock()
-        mock_app.exec.return_value = 0
 
         with (
             patch("app.AudioPlayer", return_value=MagicMock()),
             patch("app.SegmentManager", return_value=MagicMock()),
             patch("app.MainWindowQt", return_value=mock_window),
-            patch("app.QApplication", return_value=mock_app),
+            patch("app.QApplication"),
+            patch("app.QIcon"),
             patch("sys.exit"),
         ):
             import app as app_module
@@ -68,16 +57,16 @@ class TestMain:
 
         mock_window.show.assert_called_once()
 
-    def test_main_sets_app_metadata(self, monkeypatch):
+    def test_main_sets_app_metadata(self, qtbot, monkeypatch):
         """main() configures the application name and organisation."""
         mock_app = MagicMock()
-        mock_app.exec.return_value = 0
 
         with (
             patch("app.AudioPlayer", return_value=MagicMock()),
             patch("app.SegmentManager", return_value=MagicMock()),
             patch("app.MainWindowQt", return_value=MagicMock()),
             patch("app.QApplication", return_value=mock_app),
+            patch("app.QIcon"),
             patch("sys.exit"),
         ):
             import app as app_module

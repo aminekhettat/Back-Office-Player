@@ -20,8 +20,7 @@ from __future__ import annotations
 import json
 import threading
 import urllib.request
-from typing import Callable, Optional
-
+from collections.abc import Callable
 
 _GITHUB_RELEASES_URL = (
     "https://api.github.com/repos/aminekhettat/Back-Office-Player/releases/latest"
@@ -34,7 +33,7 @@ def check_for_update(
     current_version: str,
     on_update_available: Callable[[str], None],
     url: str = _GITHUB_RELEASES_URL,
-    on_error: Optional[Callable[[Exception], None]] = None,
+    on_error: Callable[[Exception], None] | None = None,
 ) -> None:
     """
     Start a background daemon thread that checks GitHub for a newer release.
@@ -60,8 +59,10 @@ def check_for_update(
 
     def _worker() -> None:
         try:
+            if not url.startswith("https://"):
+                raise ValueError(f"Only HTTPS URLs are permitted for update checks: {url!r}")
             req = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT})
-            with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:
+            with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:  # nosec B310
                 data = json.loads(resp.read().decode())
             latest = data.get("tag_name", "")
             if latest and latest != current_version:

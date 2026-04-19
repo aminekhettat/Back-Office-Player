@@ -11,8 +11,6 @@ adds focused corner-case tests for complete branch coverage.
 
 from __future__ import annotations
 
-import pytest
-
 from core.segment import Segment
 from core.segment_manager import SegmentManager
 
@@ -40,7 +38,9 @@ class TestSegmentManagerAdd:
         names = [s.name for s in m.list_segments()]
         # "a" is removed first, then appended at end
         assert names == ["b", "a"]
-        assert m.get_segment("a").start_sec == 99.0
+        seg_a = m.get_segment("a")
+        assert seg_a is not None
+        assert seg_a.start_sec == 99.0
 
 
 class TestSegmentManagerRemove:
@@ -67,12 +67,16 @@ class TestSegmentManagerGet:
     def test_get_first(self):
         """get_segment finds the first element."""
         m = _mgr("x", "y")
-        assert m.get_segment("x").name == "x"
+        seg = m.get_segment("x")
+        assert seg is not None
+        assert seg.name == "x"
 
     def test_get_last(self):
         """get_segment finds the last element."""
         m = _mgr("x", "y")
-        assert m.get_segment("y").name == "y"
+        seg = m.get_segment("y")
+        assert seg is not None
+        assert seg.name == "y"
 
     def test_get_missing_returns_none(self):
         """get_segment returns None for an unknown name."""

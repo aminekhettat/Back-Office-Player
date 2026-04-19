@@ -11,7 +11,6 @@ directories, and common domain objects used across multiple test modules.
 
 from __future__ import annotations
 
-import json
 import sys
 import threading
 from pathlib import Path
@@ -28,7 +27,6 @@ if str(_PROJECT_ROOT) not in sys.path:
 from core.segment import Segment
 from core.segment_manager import SegmentManager
 from infra.i18n import get_language, set_language
-
 
 # ---------------------------------------------------------------------------
 # Language isolation — force English so status-text assertions are stable

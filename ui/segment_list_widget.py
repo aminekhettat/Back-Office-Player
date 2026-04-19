@@ -18,6 +18,8 @@ management.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QComboBox,
@@ -75,13 +77,13 @@ class SegmentListWidget(QWidget):
     def __init__(self, segment_manager: SegmentManager, parent=None) -> None:
         super().__init__(parent)
         self.segment_manager = segment_manager
-        self.selected_callback = None
-        self.changed_callback = None
-        self.export_wav_callback = None
-        self.export_mp3_callback = None
+        self.selected_callback: Callable[[Segment], None] | None = None
+        self.changed_callback: Callable[[], None] | None = None
+        self.export_wav_callback: Callable[[Segment], None] | None = None
+        self.export_mp3_callback: Callable[[Segment], None] | None = None
         # Optional: called with (segment_name: str) instead of removing directly.
         # If None, on_delete_segment removes the segment itself.
-        self.delete_callback = None
+        self.delete_callback: Callable[[str], None] | None = None
 
         self._build_ui()
 
@@ -216,10 +218,9 @@ class SegmentListWidget(QWidget):
 
             # Color
             if segment.color:
-                try:
-                    item.setForeground(QColor(segment.color))
-                except Exception:  # pragma: no cover
-                    pass
+                color = QColor(segment.color)
+                if color.isValid():
+                    item.setForeground(color)
 
             self.list_widget.addItem(item)
 

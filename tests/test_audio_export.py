@@ -16,7 +16,6 @@ Covers:
 
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
@@ -24,7 +23,6 @@ import pytest
 import scipy.io.wavfile as wav
 
 from infra.audio_export import export_segment_mp3, export_segment_wav
-
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -44,7 +42,7 @@ class TestExportSegmentWavErrors:
     def test_none_audio_data_raises_runtime_error(self, tmp_path):
         """RuntimeError when audio_data is None."""
         with pytest.raises(RuntimeError, match="Aucune donnée audio"):
-            export_segment_wav(None, 44100, 0.0, 1.0, tmp_path / "out.wav")
+            export_segment_wav(None, 44100, 0.0, 1.0, tmp_path / "out.wav")  # type: ignore[arg-type]
 
     def test_zero_sample_rate_raises_runtime_error(self, tmp_path):
         """RuntimeError when sample_rate is 0."""
@@ -141,7 +139,7 @@ class TestExportSegmentMp3Errors:
     def test_none_audio_data_raises_runtime_error(self, tmp_path):
         """RuntimeError when audio_data is None."""
         with pytest.raises(RuntimeError, match="Aucune donnée audio"):
-            export_segment_mp3(None, 44100, 0.0, 1.0, tmp_path / "out.mp3")
+            export_segment_mp3(None, 44100, 0.0, 1.0, tmp_path / "out.mp3")  # type: ignore[arg-type]
 
     def test_zero_sample_rate_raises_runtime_error(self, tmp_path):
         """RuntimeError when sample_rate is 0."""
@@ -170,9 +168,11 @@ class TestExportSegmentMp3Errors:
     def test_soundfile_write_failure_raises_runtime_error(self, tmp_path):
         """A soundfile write error is wrapped in a RuntimeError."""
         audio = _sine()
-        with patch("infra.audio_export.sf.write", side_effect=OSError("codec error")):
-            with pytest.raises(RuntimeError, match="Impossible d'écrire le fichier MP3"):
-                export_segment_mp3(audio, 44100, 0.0, 0.5, tmp_path / "out.mp3")
+        with (
+            patch("infra.audio_export.sf.write", side_effect=OSError("codec error")),
+            pytest.raises(RuntimeError, match="Impossible d'écrire le fichier MP3"),
+        ):
+            export_segment_mp3(audio, 44100, 0.0, 0.5, tmp_path / "out.mp3")
 
 
 class TestExportSegmentMp3Success:
@@ -194,7 +194,7 @@ class TestExportSegmentMp3Success:
         out = tmp_path / "out.mp3"
         with patch("infra.audio_export.sf.write") as mock_write:
             export_segment_mp3(audio, 44100, 0.0, 0.5, out)
-            args, kwargs = mock_write.call_args
+            _args, kwargs = mock_write.call_args
             assert kwargs.get("format") == "MP3"
             assert kwargs.get("subtype") == "MPEG_LAYER_III"
 
@@ -205,7 +205,7 @@ class TestExportSegmentMp3Success:
         out = tmp_path / "out.mp3"
         with patch("infra.audio_export.sf.write") as mock_write:
             export_segment_mp3(audio, sr, 0.0, 0.5, out)
-            _, call_kwargs = mock_write.call_args
+            _, _call_kwargs = mock_write.call_args
             # Positional args: (path, data, sample_rate)
             call_args = mock_write.call_args[0]
             assert call_args[2] == sr

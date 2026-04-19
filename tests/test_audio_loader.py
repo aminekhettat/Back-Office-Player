@@ -14,12 +14,11 @@ All librosa I/O is mocked; no real audio files are needed.
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from core.audio_loader import AudioLoaderThread
-
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures
@@ -33,7 +32,7 @@ def mock_player():
 
 
 @pytest.fixture()
-def audio_path(tmp_path) -> Path:
+def audio_path(tmp_path: Path) -> Path:
     p = tmp_path / "test.mp3"
     p.touch()
     return p

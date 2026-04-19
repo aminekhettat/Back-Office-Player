@@ -23,14 +23,13 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Optional
 
 from core.segment_manager import SegmentManager
 
 _logger = logging.getLogger(__name__)
 
 
-def get_metadata_path(audio_file_path: Optional[Path]) -> Optional[Path]:
+def get_metadata_path(audio_file_path: Path | None) -> Path | None:
     """
     Compute the path of the metadata (segments) file for an audio file.
 
@@ -58,7 +57,7 @@ def get_metadata_path(audio_file_path: Optional[Path]) -> Optional[Path]:
     return audio_path.with_suffix(audio_path.suffix + ".segments.json")
 
 
-def load_segments(audio_file_path: Optional[Path]) -> SegmentManager:
+def load_segments(audio_file_path: Path | None) -> SegmentManager:
     """
     Load segments associated with an audio file.
 
@@ -93,7 +92,7 @@ def load_segments(audio_file_path: Optional[Path]) -> SegmentManager:
         return SegmentManager()
 
 
-def save_segments(audio_file_path: Optional[Path], manager: SegmentManager) -> None:
+def save_segments(audio_file_path: Path | None, manager: SegmentManager) -> None:
     """
     Save segments of an audio file to a JSON file.
 
@@ -120,7 +119,7 @@ def save_segments(audio_file_path: Optional[Path], manager: SegmentManager) -> N
 
 
 def export_segments_text(
-    audio_file_path: Optional[Path],
+    audio_file_path: Path | None,
     manager: SegmentManager,
     output_path: Path,
     fmt: str = "csv",

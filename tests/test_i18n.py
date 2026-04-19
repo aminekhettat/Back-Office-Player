@@ -14,11 +14,9 @@ getlocale failure).
 
 from __future__ import annotations
 
-import locale
 from unittest.mock import patch
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # tr()

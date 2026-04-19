@@ -21,23 +21,25 @@ Usage example::
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
 :date: 2026-04-19
-:version: 1.1.3
+:version: 1.1.4
 :disclaimer: Distributed on an "AS IS" basis, WITHOUT WARRANTIES OR
              CONDITIONS OF ANY KIND. See the LICENSE file for the full
              terms of the Apache License, Version 2.0.
-:version: 1.1.3
+:version: 1.1.4
 """
 
 from __future__ import annotations
 
 import locale
-from typing import Dict
+import logging
+
+_logger = logging.getLogger(__name__)
 
 # ── Translation table ──────────────────────────────────────────────────────
 # Each entry is  key → {"fr": French text, "en": English text}.
 # Keys are short, stable identifiers; never user-visible.
 
-_TRANSLATIONS: Dict[str, Dict[str, str]] = {
+_TRANSLATIONS: dict[str, dict[str, str]] = {
     # ── Window / application ─────────────────────────────────────────────
     "app_title": {
         "fr": "Back-Office Player",
@@ -62,6 +64,28 @@ _TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "menu_language": {"fr": "&Langue", "en": "&Language"},
     "menu_lang_fr": {"fr": "Français", "en": "Français"},
     "menu_lang_en": {"fr": "English", "en": "English"},
+    "menu_edit": {"fr": "&Édition", "en": "&Edit"},
+    "menu_undo": {"fr": "&Annuler", "en": "&Undo"},
+    "menu_redo": {"fr": "&Rétablir", "en": "&Redo"},
+    "menu_playback": {"fr": "&Lecture", "en": "&Playback"},
+    "menu_play_pause": {"fr": "Lecture / Pause", "en": "Play / Pause"},
+    "menu_stop": {"fr": "Arrêt", "en": "Stop"},
+    "menu_set_a": {"fr": "Définir point &A", "en": "Set point &A"},
+    "menu_set_b": {"fr": "Définir point &B", "en": "Set point &B"},
+    "menu_clear_ab": {"fr": "Effacer A/B", "en": "Clear A/B"},
+    "menu_toggle_loop": {"fr": "Activer/désactiver la boucle", "en": "Toggle loop"},
+    "menu_save_segment": {"fr": "Sauvegarder le segment", "en": "Save segment"},
+    "menu_next_segment": {"fr": "Segment &suivant", "en": "&Next segment"},
+    "menu_prev_segment": {"fr": "Segment &précédent", "en": "&Previous segment"},
+    "menu_export_bop": {"fr": "&Exporter la configuration (.bop)…", "en": "&Export config (.bop)…"},
+    "menu_import_bop": {"fr": "&Importer une configuration (.bop)…", "en": "&Import config (.bop)…"},
+    "menu_help": {"fr": "&Aide", "en": "&Help"},
+    "menu_about": {"fr": "À &propos…", "en": "&About…"},
+    "dlg_about_title": {"fr": "À propos de Back-Office Player", "en": "About Back-Office Player"},
+    "chk_pitch_preserving_main": {
+        "fr": "Préserver la tonalité lors du changement de tempo",
+        "en": "Preserve pitch when changing tempo",
+    },
     # ── Buttons ──────────────────────────────────────────────────────────
     "btn_play": {"fr": "Lecture", "en": "Play"},
     "btn_pause": {"fr": "Pause", "en": "Pause"},
@@ -635,8 +659,8 @@ def _detect_system_language() -> str:
         lang_code, _ = locale.getlocale()
         if lang_code and lang_code.lower().startswith("fr"):
             return "fr"
-    except Exception:
-        pass
+    except Exception as exc:
+        _logger.warning("Could not detect system language: %s", exc)
     return "en"
 
 

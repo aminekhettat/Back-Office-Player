@@ -21,11 +21,9 @@ manages the stack and exposes :meth:`~CommandHistory.undo` /
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
 
 from core.segment import Segment
 from core.segment_manager import SegmentManager
-
 
 # ── Abstract base ──────────────────────────────────────────────────────────
 
@@ -93,7 +91,7 @@ class RemoveSegmentCommand(Command):
     def __init__(self, manager: SegmentManager, name: str) -> None:
         self._manager = manager
         self._name = name
-        self._segment: Optional[Segment] = None
+        self._segment: Segment | None = None
         self._index: int = -1
 
     def execute(self) -> None:
@@ -115,7 +113,7 @@ class RemoveSegmentCommand(Command):
         for seg in segments:
             self._manager.remove_segment(seg.name)
         insert_idx = max(0, min(self._index, len(segments)))
-        combined = segments[:insert_idx] + [self._segment] + segments[insert_idx:]
+        combined = [*segments[:insert_idx], self._segment, *segments[insert_idx:]]
         for seg in combined:
             self._manager.add_segment(seg)
 
@@ -137,8 +135,8 @@ class CommandHistory:
     """
 
     def __init__(self, max_size: int = 50) -> None:
-        self._undo_stack: List[Command] = []
-        self._redo_stack: List[Command] = []
+        self._undo_stack: list[Command] = []
+        self._redo_stack: list[Command] = []
         self._max_size = max_size
 
     # ------------------------------------------------------------------ #
@@ -201,7 +199,7 @@ class CommandHistory:
         """Return ``True`` if there is at least one command to redo."""
         return bool(self._redo_stack)
 
-    def history(self) -> List[Command]:
+    def history(self) -> list[Command]:
         """Return the undo stack (oldest first) as a read-only list."""
         return list(self._undo_stack)
 

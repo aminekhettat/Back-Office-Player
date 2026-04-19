@@ -20,10 +20,9 @@ from __future__ import annotations
 import csv
 import json
 import logging
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 from platformdirs import user_data_dir
 
@@ -62,7 +61,7 @@ class PracticeHistoryEntry:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "PracticeHistoryEntry":
+    def from_dict(cls, data: dict) -> PracticeHistoryEntry:
         return cls(
             timestamp=data["timestamp"],
             audio_file=data["audio_file"],
@@ -84,7 +83,7 @@ class PracticeHistory:
         Defaults to the BOP user-data directory.
     """
 
-    def __init__(self, data_dir: Optional[Path] = None) -> None:
+    def __init__(self, data_dir: Path | None = None) -> None:
         if data_dir is None:
             data_dir = Path(user_data_dir("BOP", "BLINDSYSTEMS"))
         self._path = data_dir / "practice_history.json"
@@ -92,7 +91,7 @@ class PracticeHistory:
     # ------------------------------------------------------------------ #
     # Read / write
     # ------------------------------------------------------------------ #
-    def get_sessions(self) -> List[PracticeHistoryEntry]:
+    def get_sessions(self) -> list[PracticeHistoryEntry]:
         """
         Return all stored practice sessions (oldest first).
 
@@ -120,7 +119,7 @@ class PracticeHistory:
         sessions.append(entry)
         self._save(sessions)
 
-    def _save(self, sessions: List[PracticeHistoryEntry]) -> None:
+    def _save(self, sessions: list[PracticeHistoryEntry]) -> None:
         try:
             self._path.parent.mkdir(parents=True, exist_ok=True)
             with self._path.open("w", encoding="utf-8") as f:

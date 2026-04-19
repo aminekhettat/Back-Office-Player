@@ -124,7 +124,7 @@ def test_block_processing_at_double_speed() -> None:
 @pytest.mark.benchmark
 def test_seek_latency() -> None:
     """Position seek (sample-index update) must complete in under 1 ms."""
-    from unittest.mock import MagicMock, patch
+    from unittest.mock import patch
 
     from core.audio_player_native import AudioPlayer
 

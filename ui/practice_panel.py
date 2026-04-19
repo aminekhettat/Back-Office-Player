@@ -17,8 +17,6 @@ a session timer to the user.
 
 from __future__ import annotations
 
-from typing import Optional
-
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -57,7 +55,7 @@ class PracticePanel(QGroupBox):
             "et visualisez le temps écoulé."
         )
 
-        self._session: Optional[PracticeSession] = None
+        self._session: PracticeSession | None = None
         self._timer = QTimer(self)
         self._timer.setInterval(1000)
         self._timer.timeout.connect(self._tick)
@@ -219,7 +217,7 @@ class PracticePanel(QGroupBox):
         self._session = None
         self.lbl_session_time.setText("00:00:00")
 
-    def get_active_session(self) -> Optional[PracticeSession]:
+    def get_active_session(self) -> PracticeSession | None:
         """
         Return the active :class:`PracticeSession`, or ``None`` if no
         session is running.
@@ -245,5 +243,7 @@ class PracticePanel(QGroupBox):
     def _set_progressive_widgets_visible(self, visible: bool) -> None:
         for i in range(self._progressive_widget_row.count()):
             item = self._progressive_widget_row.itemAt(i)
-            if item and item.widget():
-                item.widget().setVisible(visible)
+            if item is not None:
+                widget = item.widget()
+                if widget is not None:
+                    widget.setVisible(visible)

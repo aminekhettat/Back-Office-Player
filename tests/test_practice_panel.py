@@ -16,7 +16,6 @@ import pytest
 from core.practice_session import PracticeSession
 from ui.practice_panel import PracticePanel
 
-
 # ---------------------------------------------------------------------------
 # Fixture
 # ---------------------------------------------------------------------------

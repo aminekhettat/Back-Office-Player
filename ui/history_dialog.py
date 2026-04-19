@@ -21,6 +21,7 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QDialog,
     QDialogButtonBox,
     QFileDialog,
@@ -35,7 +36,6 @@ from PySide6.QtWidgets import (
 
 from infra.i18n import tr
 from infra.practice_history import PracticeHistory
-
 
 # Column indices
 _COL_DATE = 0
@@ -99,8 +99,8 @@ class HistoryDialog(QDialog):
             tr("history_col_tempo"),
             tr("history_col_notes"),
         ])
-        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setAlternatingRowColors(True)
         self.table.setSortingEnabled(True)
         self.table.horizontalHeader().setStretchLastSection(True)
@@ -121,7 +121,7 @@ class HistoryDialog(QDialog):
         layout.addLayout(btn_row)
 
         # Close button
-        btn_box = QDialogButtonBox(QDialogButtonBox.Close)
+        btn_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         btn_box.rejected.connect(self.reject)
         layout.addWidget(btn_box)
 
@@ -151,7 +151,7 @@ class HistoryDialog(QDialog):
             self._set_cell(row, _COL_DURATION, _fmt_duration(entry.duration_seconds))
 
             item_loops = QTableWidgetItem()
-            item_loops.setData(Qt.DisplayRole, entry.loops_completed)
+            item_loops.setData(Qt.ItemDataRole.DisplayRole, entry.loops_completed)
             self.table.setItem(row, _COL_LOOPS, item_loops)
 
             self._set_cell(row, _COL_TEMPO, f"{entry.avg_tempo * 100:.0f} %")
@@ -172,7 +172,7 @@ class HistoryDialog(QDialog):
 
     def _set_cell(self, row: int, col: int, text: str) -> None:
         item = QTableWidgetItem(text)
-        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
         self.table.setItem(row, col, item)
 
     # ------------------------------------------------------------------ #

@@ -13,15 +13,12 @@ retranslate_ui.
 
 from __future__ import annotations
 
-import datetime
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from infra.practice_history import PracticeHistory, PracticeHistoryEntry
 from ui.history_dialog import HistoryDialog, _fmt_duration
-
 
 # ---------------------------------------------------------------------------
 # Helpers

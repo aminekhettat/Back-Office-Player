@@ -19,10 +19,11 @@ from __future__ import annotations
 
 import threading
 from collections import OrderedDict
-from typing import Callable, Optional
+from collections.abc import Callable
+from typing import cast
 
-import numpy as np
 import librosa
+import numpy as np
 
 
 class PitchEngine:
@@ -145,11 +146,11 @@ class PitchEngine:
     # ------------------------------------------------------------------ #
     # Private helpers
     # ------------------------------------------------------------------ #
-    def _get_cached(self, key: tuple) -> Optional[np.ndarray]:
+    def _get_cached(self, key: tuple) -> np.ndarray | None:
         with self._lock:
             if key in self._cache:
                 self._cache.move_to_end(key)
-                return self._cache[key]
+                return cast(np.ndarray, self._cache[key])
         return None
 
     def _set_cached(self, key: tuple, value: np.ndarray) -> None:

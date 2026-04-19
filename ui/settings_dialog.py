@@ -16,7 +16,7 @@ Two-tab QDialog for customizing keyboard shortcuts and appearance.
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import (
@@ -37,7 +37,7 @@ from PySide6.QtWidgets import (
 from infra.i18n import tr
 
 # Action keys (stable identifiers) mapped to i18n keys for their labels.
-_SHORTCUT_KEY_MAP: Dict[str, str] = {
+_SHORTCUT_KEY_MAP: dict[str, str] = {
     "open": "shortcut_open",
     "play": "shortcut_play",
     "pause": "shortcut_pause",
@@ -75,7 +75,7 @@ class SettingsDialog(QDialog):
         Parent widget.
     """
 
-    def __init__(self, settings: Dict[str, Any], parent=None) -> None:
+    def __init__(self, settings: dict[str, Any], parent=None) -> None:
         super().__init__(parent)
         self.settings = settings
         self.setWindowTitle(tr("settings_title"))
@@ -101,7 +101,7 @@ class SettingsDialog(QDialog):
 
         # OK / Cancel buttons
         btn_box = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
         btn_box.accepted.connect(self._on_accept)
         btn_box.rejected.connect(self.reject)
@@ -112,9 +112,9 @@ class SettingsDialog(QDialog):
         tab.setAccessibleName(tr("settings_tab_shortcuts_accessible_name"))
         layout = QFormLayout(tab)
 
-        shortcuts_cfg: Dict[str, str] = self.settings.get("shortcuts", {})
-        self._shortcut_edits: Dict[str, QKeySequenceEdit] = {}
-        self._shortcut_labels: Dict[str, QLabel] = {}
+        shortcuts_cfg: dict[str, str] = self.settings.get("shortcuts", {})
+        self._shortcut_edits: dict[str, QKeySequenceEdit] = {}
+        self._shortcut_labels: dict[str, QLabel] = {}
 
         for action_key, i18n_key in _SHORTCUT_KEY_MAP.items():
             label_text = tr(i18n_key)
@@ -209,7 +209,7 @@ class SettingsDialog(QDialog):
     def _on_accept(self) -> None:
         """Write widget values back into ``self.settings`` then accept."""
         # Shortcuts
-        shortcuts: Dict[str, str] = self.settings.setdefault("shortcuts", {})
+        shortcuts: dict[str, str] = self.settings.setdefault("shortcuts", {})
         for action_key, editor in self._shortcut_edits.items():
             seq = editor.keySequence()
             shortcuts[action_key] = seq.toString()
