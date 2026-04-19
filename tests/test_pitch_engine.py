@@ -22,6 +22,7 @@ from core.pitch_engine import PitchEngine
 # Helper: run a PitchEngine call synchronously
 # ---------------------------------------------------------------------------
 
+
 def _sync(fn, *args, **kwargs):
     """
     Call fn(..., on_done, on_error) and block until the callback fires.
@@ -48,6 +49,7 @@ def _sync(fn, *args, **kwargs):
 # ---------------------------------------------------------------------------
 # stretch()
 # ---------------------------------------------------------------------------
+
 
 class TestPitchEngineStretch:
     def test_stretch_cache_miss_success(self, sample_audio, sample_rate):
@@ -86,6 +88,7 @@ class TestPitchEngineStretch:
 # shift()
 # ---------------------------------------------------------------------------
 
+
 class TestPitchEngineShift:
     def test_shift_cache_miss_success(self, sample_audio, sample_rate):
         """shift() calls librosa on a cache miss and returns the result."""
@@ -119,6 +122,7 @@ class TestPitchEngineShift:
 # ---------------------------------------------------------------------------
 # clear_cache()
 # ---------------------------------------------------------------------------
+
 
 class TestPitchEngineCache:
     def test_clear_cache_forces_recomputation(self, sample_audio, sample_rate):

@@ -34,6 +34,7 @@ import soundfile as sf
 
 # ── Shared helpers ─────────────────────────────────────────────────────────
 
+
 def _validate_and_slice(
     audio_data: np.ndarray | None,
     sample_rate: int,
@@ -67,9 +68,7 @@ def _validate_and_slice(
         If *end_sec* ≤ *start_sec* or the computed slice is empty.
     """
     if audio_data is None or sample_rate == 0:
-        raise RuntimeError(
-            "Aucune donnée audio chargée — impossible d'exporter le segment."
-        )
+        raise RuntimeError("Aucune donnée audio chargée — impossible d'exporter le segment.")
     if end_sec <= start_sec:
         raise ValueError(
             f"La borne de fin ({end_sec:.3f} s) doit être supérieure "
@@ -87,6 +86,7 @@ def _validate_and_slice(
 
 
 # ── Public API ─────────────────────────────────────────────────────────────
+
 
 def export_segment_wav(
     audio_data: np.ndarray,

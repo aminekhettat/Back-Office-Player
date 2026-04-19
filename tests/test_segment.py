@@ -18,6 +18,7 @@ from core.segment_manager import SegmentManager
 
 # ── Segment ────────────────────────────────────────────────────────────
 
+
 class TestSegmentDuration:
     def test_duration_positive(self):
         """duration() returns end_sec - start_sec for a normal segment."""
@@ -39,8 +40,13 @@ class TestSegmentToDict:
     def test_to_dict_includes_all_fields(self):
         """to_dict() serialises all fields including optional ones."""
         s = Segment(
-            "v", 0.0, 1.0,
-            notes="n", color="#ff0000", category="c", practice_count=3,
+            "v",
+            0.0,
+            1.0,
+            notes="n",
+            color="#ff0000",
+            category="c",
+            practice_count=3,
         )
         d = s.to_dict()
         assert d["name"] == "v"
@@ -94,7 +100,9 @@ class TestSegmentFromDict:
     def test_from_dict_practice_count_as_string(self):
         """from_dict() converts practice_count strings to int."""
         d = {
-            "name": "x", "start_sec": 0.0, "end_sec": 1.0,
+            "name": "x",
+            "start_sec": 0.0,
+            "end_sec": 1.0,
             "practice_count": "7",
         }
         s = Segment.from_dict(d)
@@ -112,13 +120,19 @@ class TestSegmentRoundtrip:
     def test_roundtrip_preserves_all_fields(self):
         """to_dict → from_dict reconstructs an identical Segment."""
         s = Segment(
-            "rt", 2.5, 7.3,
-            notes="test", color="#abc", category="easy", practice_count=1,
+            "rt",
+            2.5,
+            7.3,
+            notes="test",
+            color="#abc",
+            category="easy",
+            practice_count=1,
         )
         assert Segment.from_dict(s.to_dict()) == s
 
 
 # ── SegmentManager ─────────────────────────────────────────────────────
+
 
 class TestSegmentManager:
     def _manager_with(self, *names) -> SegmentManager:

@@ -127,9 +127,7 @@ class PracticeSession:
             self._active = False
 
         if self.progressive_tempo:
-            self._current_tempo = min(
-                self._current_tempo + self.tempo_step, self.tempo_target
-            )
+            self._current_tempo = min(self._current_tempo + self.tempo_step, self.tempo_target)
 
         return should_stop, self._current_tempo
 

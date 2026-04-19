@@ -30,8 +30,7 @@ except ImportError:  # pragma: no cover
 pytestmark = pytest.mark.property
 
 if not _HYPOTHESIS_AVAILABLE:  # pragma: no cover
-    pytest.skip("hypothesis not installed — run: pip install hypothesis",
-                allow_module_level=True)
+    pytest.skip("hypothesis not installed — run: pip install hypothesis", allow_module_level=True)
 
 from core.commands import AddSegmentCommand, CommandHistory
 from core.segment import Segment
@@ -69,6 +68,7 @@ def _segment_strategy():
 # Segment invariants
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.property
 class TestSegmentProperties:
     @given(_segment_strategy())
@@ -93,14 +93,11 @@ class TestSegmentProperties:
     def test_to_dict_contains_required_keys(self, seg: Segment) -> None:
         """to_dict() always contains the mandatory keys."""
         d = seg.to_dict()
-        for key in ("name", "start_sec", "end_sec", "notes", "color",
-                    "category", "practice_count"):
+        for key in ("name", "start_sec", "end_sec", "notes", "color", "category", "practice_count"):
             assert key in d
 
     @given(st.text(min_size=1), _seconds, _seconds)
-    def test_from_dict_minimal_keys_sufficient(
-        self, name: str, start: float, end: float
-    ) -> None:
+    def test_from_dict_minimal_keys_sufficient(self, name: str, start: float, end: float) -> None:
         """from_dict works with only the mandatory keys; optional keys default."""
         seg = Segment.from_dict({"name": name, "start_sec": start, "end_sec": end})
         assert seg.name == name
@@ -111,6 +108,7 @@ class TestSegmentProperties:
 # ---------------------------------------------------------------------------
 # SegmentManager invariants
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.property
 class TestSegmentManagerProperties:
@@ -172,6 +170,7 @@ class TestSegmentManagerProperties:
 # ---------------------------------------------------------------------------
 # CommandHistory invariants
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.property
 class TestCommandHistoryProperties:

@@ -51,8 +51,7 @@ class PracticePanel(QGroupBox):
         super().__init__(tr("practice_panel_title"), parent)
         self.setAccessibleName("Panneau de session de pratique")
         self.setAccessibleDescription(
-            "Configurez le nombre de boucles, le tempo progressif "
-            "et visualisez le temps écoulé."
+            "Configurez le nombre de boucles, le tempo progressif " "et visualisez le temps écoulé."
         )
 
         self._session: PracticeSession | None = None

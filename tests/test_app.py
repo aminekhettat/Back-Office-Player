@@ -19,6 +19,7 @@ class TestMain:
     def test_main_is_importable(self):
         """app.main can be imported without side effects."""
         import app
+
         assert hasattr(app, "main")
 
     def test_main_runs_without_real_qt(self, qtbot, monkeypatch):
@@ -36,6 +37,7 @@ class TestMain:
             patch("app.QIcon"),
         ):
             import app as app_module
+
             app_module.main()
 
         mock_exit.assert_called_once()
@@ -53,6 +55,7 @@ class TestMain:
             patch("sys.exit"),
         ):
             import app as app_module
+
             app_module.main()
 
         mock_window.show.assert_called_once()
@@ -70,6 +73,7 @@ class TestMain:
             patch("sys.exit"),
         ):
             import app as app_module
+
             app_module.main()
 
         mock_app.setApplicationName.assert_called_once_with("BOP")

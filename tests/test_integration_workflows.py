@@ -30,6 +30,7 @@ from infra.persistence import load_segments, save_segments
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def wav_file(tmp_path: Path, sample_audio: np.ndarray, sample_rate: int) -> Path:
     """Write a real 1-second WAV file and return its path."""
@@ -49,6 +50,7 @@ def real_player(wav_file: Path) -> AudioPlayer:
 # ---------------------------------------------------------------------------
 # File → segment → save → reload workflow
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.integration
 class TestFileSegmentWorkflow:
@@ -104,9 +106,15 @@ class TestFileSegmentWorkflow:
         """All optional fields (color, category, practice_count) persist."""
         mgr = SegmentManager()
         mgr.add_segment(
-            Segment("Solo", 0.0, 0.5,
-                    notes="very hard", color="#ff0000",
-                    category="difficult", practice_count=7)
+            Segment(
+                "Solo",
+                0.0,
+                0.5,
+                notes="very hard",
+                color="#ff0000",
+                category="difficult",
+                practice_count=7,
+            )
         )
         save_segments(wav_file, mgr)
 
@@ -120,6 +128,7 @@ class TestFileSegmentWorkflow:
 # ---------------------------------------------------------------------------
 # Undo / redo workflow
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.integration
 class TestUndoRedoWorkflow:
@@ -200,6 +209,7 @@ class TestUndoRedoWorkflow:
 # ---------------------------------------------------------------------------
 # AudioPlayer position and state after real load
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.integration
 class TestPlayerStateAfterLoad:

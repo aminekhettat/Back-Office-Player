@@ -26,6 +26,7 @@ from core.segment_manager import SegmentManager
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _mgr(*names) -> SegmentManager:
     m = SegmentManager()
     for i, n in enumerate(names):
@@ -36,6 +37,7 @@ def _mgr(*names) -> SegmentManager:
 # ---------------------------------------------------------------------------
 # AddSegmentCommand
 # ---------------------------------------------------------------------------
+
 
 class TestAddSegmentCommand:
     def test_execute_adds_segment(self):
@@ -65,6 +67,7 @@ class TestAddSegmentCommand:
 # ---------------------------------------------------------------------------
 # RemoveSegmentCommand
 # ---------------------------------------------------------------------------
+
 
 class TestRemoveSegmentCommand:
     def test_execute_removes_segment(self):
@@ -131,6 +134,7 @@ class TestRemoveSegmentCommand:
 # ---------------------------------------------------------------------------
 # CommandHistory
 # ---------------------------------------------------------------------------
+
 
 class TestCommandHistory:
     def test_execute_runs_command_and_adds_to_undo(self):

@@ -3,7 +3,8 @@
 # ============================================================
 # Usage:
 #   make test       — run tests with coverage (must reach 100%)
-#   make lint       — run flake8 on source code
+#   make lint       — run ruff + black --check on source code
+#   make format     — apply black formatting in-place
 #   make docs       — build Sphinx HTML documentation
 #   make ci         — run lint + test + docs (full local CI)
 #   make clean      — remove build artefacts
@@ -12,7 +13,8 @@
 
 PYTHON   ?= python
 PYTEST   ?= pytest
-FLAKE8   ?= flake8
+RUFF     ?= ruff
+BLACK    ?= black
 SPHINX   ?= sphinx-build
 
 SOURCES  = core/ infra/ ui/ app.py __version__.py
@@ -23,10 +25,16 @@ DOCS_OUT = docs/_build/html
 # ── Lint ─────────────────────────────────────────────────────────────────────
 .PHONY: lint
 lint:
-	$(FLAKE8) $(SOURCES) \
-		--max-line-length=100 \
-		--extend-ignore=E501,W503,E203
-	@echo "✓ flake8 passed"
+	$(RUFF) check .
+	@echo "✓ ruff passed"
+	$(BLACK) --check .
+	@echo "✓ black passed"
+
+# ── Format (apply) ───────────────────────────────────────────────────────────
+.PHONY: format
+format:
+	$(BLACK) .
+	@echo "✓ black formatting applied"
 
 # ── Tests + Coverage ─────────────────────────────────────────────────────────
 .PHONY: test
@@ -62,7 +70,7 @@ hooks:
 	@echo "✓ pre-commit hook installed (auto-bump patch on every commit)"
 	@cp scripts/pre-push .git/hooks/pre-push
 	@chmod +x .git/hooks/pre-push
-	@echo "✓ pre-push hook installed (flake8 + tests before push)"
+	@echo "✓ pre-push hook installed (ruff + black + tests before push)"
 
 # ── Bump version manually ─────────────────────────────────────────────────────
 .PHONY: bump-patch bump-minor bump-major

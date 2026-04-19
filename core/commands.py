@@ -27,6 +27,7 @@ from core.segment_manager import SegmentManager
 
 # ── Abstract base ──────────────────────────────────────────────────────────
 
+
 class Command(ABC):
     """Abstract base class for all undoable commands."""
 
@@ -45,6 +46,7 @@ class Command(ABC):
 
 
 # ── Concrete commands ──────────────────────────────────────────────────────
+
 
 class AddSegmentCommand(Command):
     """
@@ -123,6 +125,7 @@ class RemoveSegmentCommand(Command):
 
 
 # ── History stack ──────────────────────────────────────────────────────────
+
 
 class CommandHistory:
     """

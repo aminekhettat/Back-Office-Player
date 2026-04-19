@@ -99,9 +99,7 @@ class SegmentListWidget(QWidget):
         self.lbl_segments = QLabel(tr("segment_list_label"))
         self.lbl_segments.setAccessibleName(tr("segment_list_label"))
         self.cmb_category = QComboBox()
-        self.cmb_category.setAccessibleName(
-            tr("segment_list_category_filter_accessible_name")
-        )
+        self.cmb_category.setAccessibleName(tr("segment_list_category_filter_accessible_name"))
         self.cmb_category.setAccessibleDescription(
             tr("segment_list_category_filter_accessible_desc")
         )
@@ -116,9 +114,7 @@ class SegmentListWidget(QWidget):
         # List widget for segments
         self.list_widget = QListWidget()
         self.list_widget.setAccessibleName(tr("segment_list_accessible_name"))
-        self.list_widget.setAccessibleDescription(
-            tr("segment_list_accessible_desc")
-        )
+        self.list_widget.setAccessibleDescription(tr("segment_list_accessible_desc"))
         self.list_widget.itemClicked.connect(self.on_segment_selected)
         self.list_widget.itemDoubleClicked.connect(self.on_jump_to_segment)
         layout.addWidget(self.list_widget)
@@ -133,43 +129,27 @@ class SegmentListWidget(QWidget):
 
         self.btn_delete = QPushButton(tr("btn_delete_segment"))
         self.btn_delete.setAccessibleName(tr("segment_btn_delete_accessible_name"))
-        self.btn_delete.setAccessibleDescription(
-            tr("segment_btn_delete_accessible_desc")
-        )
+        self.btn_delete.setAccessibleDescription(tr("segment_btn_delete_accessible_desc"))
         self.btn_delete.clicked.connect(self.on_delete_segment)
 
         self.btn_move_up = QPushButton(tr("btn_move_up"))
         self.btn_move_up.setAccessibleName(tr("segment_btn_move_up_accessible_name"))
-        self.btn_move_up.setAccessibleDescription(
-            tr("segment_btn_move_up_accessible_desc")
-        )
+        self.btn_move_up.setAccessibleDescription(tr("segment_btn_move_up_accessible_desc"))
         self.btn_move_up.clicked.connect(self.on_move_up)
 
         self.btn_move_down = QPushButton(tr("btn_move_down"))
-        self.btn_move_down.setAccessibleName(
-            tr("segment_btn_move_down_accessible_name")
-        )
-        self.btn_move_down.setAccessibleDescription(
-            tr("segment_btn_move_down_accessible_desc")
-        )
+        self.btn_move_down.setAccessibleName(tr("segment_btn_move_down_accessible_name"))
+        self.btn_move_down.setAccessibleDescription(tr("segment_btn_move_down_accessible_desc"))
         self.btn_move_down.clicked.connect(self.on_move_down)
 
         self.btn_export_wav = QPushButton(tr("btn_export_wav"))
-        self.btn_export_wav.setAccessibleName(
-            tr("segment_btn_export_wav_accessible_name")
-        )
-        self.btn_export_wav.setAccessibleDescription(
-            tr("segment_btn_export_wav_accessible_desc")
-        )
+        self.btn_export_wav.setAccessibleName(tr("segment_btn_export_wav_accessible_name"))
+        self.btn_export_wav.setAccessibleDescription(tr("segment_btn_export_wav_accessible_desc"))
         self.btn_export_wav.clicked.connect(self.on_export_wav)
 
         self.btn_export_mp3 = QPushButton(tr("btn_export_mp3"))
-        self.btn_export_mp3.setAccessibleName(
-            tr("segment_btn_export_mp3_accessible_name")
-        )
-        self.btn_export_mp3.setAccessibleDescription(
-            tr("segment_btn_export_mp3_accessible_desc")
-        )
+        self.btn_export_mp3.setAccessibleName(tr("segment_btn_export_mp3_accessible_name"))
+        self.btn_export_mp3.setAccessibleDescription(tr("segment_btn_export_mp3_accessible_desc"))
         self.btn_export_mp3.clicked.connect(self.on_export_mp3)
 
         buttons_layout.addWidget(self.btn_jump)
@@ -380,12 +360,8 @@ class SegmentListWidget(QWidget):
         self.btn_move_down.setText(tr("btn_move_down"))
         self.btn_export_wav.setText(tr("btn_export_wav"))
         self.btn_export_mp3.setText(tr("btn_export_mp3"))
-        self.btn_export_mp3.setAccessibleName(
-            tr("segment_btn_export_mp3_accessible_name")
-        )
-        self.cmb_category.setAccessibleName(
-            tr("segment_list_category_filter_accessible_name")
-        )
+        self.btn_export_mp3.setAccessibleName(tr("segment_btn_export_mp3_accessible_name"))
+        self.cmb_category.setAccessibleName(tr("segment_list_category_filter_accessible_name"))
         self.list_widget.setAccessibleName(tr("segment_list_accessible_name"))
         self.refresh_list()
 

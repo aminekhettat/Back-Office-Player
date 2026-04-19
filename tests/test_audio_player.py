@@ -24,6 +24,7 @@ from core.audio_player_native import AudioPlayer
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def mock_audio(sample_audio, sample_rate):
     """Patch librosa.load and sounddevice to avoid real I/O."""
@@ -58,6 +59,7 @@ def _load_player(tmp_path, sample_audio, sample_rate):
 # ---------------------------------------------------------------------------
 # load_file
 # ---------------------------------------------------------------------------
+
 
 class TestAudioPlayerLoad:
     def test_load_file_not_found_raises(self):
@@ -114,6 +116,7 @@ class TestAudioPlayerLoad:
 # ---------------------------------------------------------------------------
 # play / pause / stop
 # ---------------------------------------------------------------------------
+
 
 class TestPlaybackControls:
     def test_play_no_file_is_noop(self):
@@ -175,6 +178,7 @@ class TestPlaybackControls:
 # Position and duration
 # ---------------------------------------------------------------------------
 
+
 class TestPositionAndDuration:
     def test_get_position_before_load(self):
         """get_position returns 0.0 when no file is loaded."""
@@ -223,6 +227,7 @@ class TestPositionAndDuration:
 # Volume
 # ---------------------------------------------------------------------------
 
+
 class TestVolume:
     def test_default_volume(self):
         """Default volume is 80."""
@@ -250,6 +255,7 @@ class TestVolume:
 # ---------------------------------------------------------------------------
 # Tempo
 # ---------------------------------------------------------------------------
+
 
 class TestTempo:
     def test_default_tempo(self):
@@ -279,6 +285,7 @@ class TestTempo:
 # Pitch semitones
 # ---------------------------------------------------------------------------
 
+
 class TestPitchSemitones:
     def test_default_pitch(self):
         """Default pitch semitones is 0.0."""
@@ -307,6 +314,7 @@ class TestPitchSemitones:
 # Pitch-preserving flag
 # ---------------------------------------------------------------------------
 
+
 class TestPitchPreserving:
     def test_default_pitch_preserving_is_false(self):
         """Pitch-preserving mode is disabled by default."""
@@ -329,6 +337,7 @@ class TestPitchPreserving:
 # ---------------------------------------------------------------------------
 # apply_pitch_async
 # ---------------------------------------------------------------------------
+
 
 class TestApplyPitchAsync:
     def test_no_audio_calls_on_ready_immediately(self):
@@ -367,6 +376,7 @@ class TestApplyPitchAsync:
         done = threading.Event()
 
         with patch.object(player._pitch_engine, "shift") as mock_shift:
+
             def fake_shift(audio, sr, semitones, on_done, on_error):
                 on_done(shifted)
 
@@ -391,6 +401,7 @@ class TestApplyPitchAsync:
         done = threading.Event()
 
         with patch.object(player._pitch_engine, "stretch") as mock_stretch:
+
             def fake_stretch(audio, sr, rate, on_done, on_error):
                 on_done(stretched)
 
@@ -410,6 +421,7 @@ class TestApplyPitchAsync:
         done = threading.Event()
 
         with patch.object(player._pitch_engine, "shift") as mock_shift:
+
             def fake_shift(audio, sr, semitones, on_done, on_error):
                 on_error(RuntimeError("shift failed"))
 
@@ -438,6 +450,7 @@ class TestApplyPitchAsync:
             patch.object(player._pitch_engine, "shift") as mock_shift,
             patch.object(player._pitch_engine, "stretch") as mock_stretch,
         ):
+
             def fake_shift(audio, sr, semitones, on_done, on_error):
                 on_done(shifted)
 
@@ -451,9 +464,7 @@ class TestApplyPitchAsync:
             mock_shift.assert_called_once()
             mock_stretch.assert_called_once()
 
-    def test_nonzero_shift_stretch_error(
-        self, tmp_path, sample_audio, sample_rate, mock_audio
-    ):
+    def test_nonzero_shift_stretch_error(self, tmp_path, sample_audio, sample_rate, mock_audio):
         """Stretch error inside shift-then-stretch path sets _processed_audio to shifted."""
         p = tmp_path / "audio.mp3"
         p.touch()
@@ -470,6 +481,7 @@ class TestApplyPitchAsync:
             patch.object(player._pitch_engine, "shift") as mock_shift,
             patch.object(player._pitch_engine, "stretch") as mock_stretch,
         ):
+
             def fake_shift(audio, sr, semitones, on_done, on_error):
                 on_done(shifted)
 
@@ -496,6 +508,7 @@ class TestApplyPitchAsync:
         done = threading.Event()
 
         with patch.object(player._pitch_engine, "stretch") as mock_stretch:
+
             def fake_stretch(audio, sr, rate, on_done, on_error):
                 on_error(RuntimeError("stretch error"))
 
@@ -508,6 +521,7 @@ class TestApplyPitchAsync:
 # ---------------------------------------------------------------------------
 # _playback_worker (via integration: small buffer plays to completion)
 # ---------------------------------------------------------------------------
+
 
 class TestPlaybackWorker:
     def test_worker_plays_to_end(self, tmp_path):
@@ -658,7 +672,7 @@ class TestPlaybackWorker:
 
         player = AudioPlayer()
         with player._lock:
-            player._audio_data = _EmptySliceAudio()  # type: ignore[assignment]
+            player._audio_data = _EmptySliceAudio()
             player._sample_rate = 44100
             player._duration = 1.0
             player._is_playing = True
@@ -703,8 +717,11 @@ class TestPlaybackWorker:
 # set_position — duration=0 fallback branch
 # ---------------------------------------------------------------------------
 
+
 class TestSetPositionDurationZero:
-    def test_set_position_duration_zero_uses_sample_rate(self, tmp_path, sample_audio, sample_rate, mock_audio):
+    def test_set_position_duration_zero_uses_sample_rate(
+        self, tmp_path, sample_audio, sample_rate, mock_audio
+    ):
         """set_position falls back to sample_rate multiply when _duration==0 (line 236)."""
         p = tmp_path / "audio.mp3"
         p.touch()
@@ -724,6 +741,7 @@ class TestSetPositionDurationZero:
 # get_position — empty-buffer branch
 # ---------------------------------------------------------------------------
 
+
 class TestGetPositionEmptyBuffer:
     def test_get_position_empty_audio_returns_zero(self):
         """get_position returns 0.0 when the active buffer is empty (line 257)."""
@@ -740,8 +758,11 @@ class TestGetPositionEmptyBuffer:
 # clear_processed_audio — all branches
 # ---------------------------------------------------------------------------
 
+
 class TestClearProcessedAudio:
-    def test_clear_when_processed_audio_is_none_is_noop(self, tmp_path, sample_audio, sample_rate, mock_audio):
+    def test_clear_when_processed_audio_is_none_is_noop(
+        self, tmp_path, sample_audio, sample_rate, mock_audio
+    ):
         """clear_processed_audio is a no-op when _processed_audio is already None (lines 376-386)."""
         p = tmp_path / "audio.mp3"
         p.touch()
@@ -761,7 +782,9 @@ class TestClearProcessedAudio:
         player.clear_processed_audio()
         assert player._processed_audio is None
 
-    def test_clear_rescales_position_when_lengths_differ(self, tmp_path, sample_audio, sample_rate, mock_audio):
+    def test_clear_rescales_position_when_lengths_differ(
+        self, tmp_path, sample_audio, sample_rate, mock_audio
+    ):
         """clear_processed_audio rescales _current_sample_pos when lengths differ."""
         p = tmp_path / "audio.mp3"
         p.touch()
@@ -778,7 +801,9 @@ class TestClearProcessedAudio:
             assert player._current_sample_pos == raw_len // 2
         assert player._processed_audio is None
 
-    def test_clear_same_length_does_not_rescale(self, tmp_path, sample_audio, sample_rate, mock_audio):
+    def test_clear_same_length_does_not_rescale(
+        self, tmp_path, sample_audio, sample_rate, mock_audio
+    ):
         """clear_processed_audio skips rescaling when old_len == new_len."""
         p = tmp_path / "audio.mp3"
         p.touch()
@@ -799,6 +824,7 @@ class TestClearProcessedAudio:
 # ---------------------------------------------------------------------------
 # apply_pitch_async — position rescaling when buffer length changes
 # ---------------------------------------------------------------------------
+
 
 class TestApplyPitchAsyncRescaling:
     def test_swap_buffer_rescales_position_on_length_change(
@@ -823,6 +849,7 @@ class TestApplyPitchAsyncRescaling:
         player.set_tempo(1.5)
 
         with patch.object(player._pitch_engine, "stretch") as mock_stretch:
+
             def fake_stretch(audio, sr, rate, on_done, on_error):
                 on_done(stretched)
 

@@ -22,6 +22,7 @@ from infra.practice_history import PracticeHistory, PracticeHistoryEntry
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def history(tmp_path: Path) -> PracticeHistory:
     """Return a PracticeHistory pointing at a temp directory."""
@@ -45,6 +46,7 @@ def _entry(**kwargs) -> PracticeHistoryEntry:
 # ---------------------------------------------------------------------------
 # PracticeHistoryEntry
 # ---------------------------------------------------------------------------
+
 
 class TestPracticeHistoryEntry:
     def test_to_dict_contains_all_fields(self):
@@ -94,6 +96,7 @@ class TestPracticeHistoryEntry:
 # PracticeHistory.get_sessions
 # ---------------------------------------------------------------------------
 
+
 class TestGetSessions:
     def test_empty_initially(self, history: PracticeHistory):
         """get_sessions returns [] when no history file exists."""
@@ -119,6 +122,7 @@ class TestGetSessions:
 # PracticeHistory.add_session
 # ---------------------------------------------------------------------------
 
+
 class TestAddSession:
     def test_add_creates_file(self, history: PracticeHistory, tmp_path: Path):
         """add_session creates the history JSON file."""
@@ -141,6 +145,7 @@ class TestAddSession:
 # ---------------------------------------------------------------------------
 # PracticeHistory.export_csv
 # ---------------------------------------------------------------------------
+
 
 class TestExportCsv:
     def test_export_csv_creates_file(self, history: PracticeHistory, tmp_path: Path):
@@ -178,6 +183,7 @@ class TestExportCsv:
 # PracticeHistory.make_entry
 # ---------------------------------------------------------------------------
 
+
 class TestMakeEntry:
     def test_make_entry_sets_timestamp(self):
         """make_entry fills the timestamp automatically."""
@@ -204,6 +210,7 @@ class TestMakeEntry:
 # ---------------------------------------------------------------------------
 # PracticeHistory init with default data_dir (coverage of platformdirs path)
 # ---------------------------------------------------------------------------
+
 
 class TestDefaultDataDir:
     def test_instantiation_without_data_dir(self, monkeypatch, tmp_path):

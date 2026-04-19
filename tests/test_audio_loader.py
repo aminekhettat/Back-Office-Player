@@ -24,6 +24,7 @@ from core.audio_loader import AudioLoaderThread
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def mock_player():
     """Return a lightweight mock of AudioPlayer."""
@@ -41,6 +42,7 @@ def audio_path(tmp_path: Path) -> Path:
 # ---------------------------------------------------------------------------
 # Successful load
 # ---------------------------------------------------------------------------
+
 
 class TestAudioLoaderThreadSuccess:
     def test_loaded_signal_emitted_on_success(self, qtbot, mock_player, audio_path):
@@ -67,6 +69,7 @@ class TestAudioLoaderThreadSuccess:
 # ---------------------------------------------------------------------------
 # Error handling
 # ---------------------------------------------------------------------------
+
 
 class TestAudioLoaderThreadError:
     def test_error_signal_emitted_on_exception(self, qtbot, mock_player, audio_path):
@@ -96,6 +99,7 @@ class TestAudioLoaderThreadError:
 # ---------------------------------------------------------------------------
 # Direct run() calls — ensures coverage tracks the thread code
 # ---------------------------------------------------------------------------
+
 
 class TestAudioLoaderRunDirect:
     def test_run_success_emits_loaded(self, qtbot, mock_player, audio_path):

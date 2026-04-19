@@ -91,14 +91,16 @@ class HistoryDialog(QDialog):
 
         # Table
         self.table = QTableWidget(0, _NUM_COLS)
-        self.table.setHorizontalHeaderLabels([
-            tr("history_col_date"),
-            tr("history_col_file"),
-            tr("history_col_duration"),
-            tr("history_col_loops"),
-            tr("history_col_tempo"),
-            tr("history_col_notes"),
-        ])
+        self.table.setHorizontalHeaderLabels(
+            [
+                tr("history_col_date"),
+                tr("history_col_file"),
+                tr("history_col_duration"),
+                tr("history_col_loops"),
+                tr("history_col_tempo"),
+                tr("history_col_notes"),
+            ]
+        )
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setAlternatingRowColors(True)
@@ -112,9 +114,7 @@ class HistoryDialog(QDialog):
         btn_row = QHBoxLayout()
         self.btn_export = QPushButton(tr("btn_export_csv_hist"))
         self.btn_export.setAccessibleName(tr("history_btn_export_accessible_name"))
-        self.btn_export.setAccessibleDescription(
-            tr("history_btn_export_accessible_desc")
-        )
+        self.btn_export.setAccessibleDescription(tr("history_btn_export_accessible_desc"))
         self.btn_export.clicked.connect(self._on_export_csv)
         btn_row.addWidget(self.btn_export)
         btn_row.addStretch()
@@ -166,9 +166,7 @@ class HistoryDialog(QDialog):
         # Summary
         n = len(sessions)
         dur_str = _fmt_duration(total_duration)
-        self.lbl_summary.setText(
-            tr("history_summary", n=n, loops=total_loops, dur=dur_str)
-        )
+        self.lbl_summary.setText(tr("history_summary", n=n, loops=total_loops, dur=dur_str))
 
     def _set_cell(self, row: int, col: int, text: str) -> None:
         item = QTableWidgetItem(text)
@@ -210,16 +208,16 @@ class HistoryDialog(QDialog):
         self.lbl_summary.setAccessibleName(tr("history_summary_label"))
         self.btn_export.setText(tr("btn_export_csv_hist"))
         self.btn_export.setAccessibleName(tr("history_btn_export_accessible_name"))
-        self.btn_export.setAccessibleDescription(
-            tr("history_btn_export_accessible_desc")
+        self.btn_export.setAccessibleDescription(tr("history_btn_export_accessible_desc"))
+        self.table.setHorizontalHeaderLabels(
+            [
+                tr("history_col_date"),
+                tr("history_col_file"),
+                tr("history_col_duration"),
+                tr("history_col_loops"),
+                tr("history_col_tempo"),
+                tr("history_col_notes"),
+            ]
         )
-        self.table.setHorizontalHeaderLabels([
-            tr("history_col_date"),
-            tr("history_col_file"),
-            tr("history_col_duration"),
-            tr("history_col_loops"),
-            tr("history_col_tempo"),
-            tr("history_col_notes"),
-        ])
         self.table.setAccessibleName(tr("history_table_accessible_name"))
         self.table.setAccessibleDescription(tr("history_table_accessible_desc"))

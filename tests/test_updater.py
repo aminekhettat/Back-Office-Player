@@ -24,6 +24,7 @@ from infra.updater import check_for_update
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _fake_response(tag_name: str) -> MagicMock:
     """Return a mock HTTP response object with the given tag_name."""
     body = json.dumps({"tag_name": tag_name}).encode()
@@ -42,6 +43,7 @@ def _wait_for(event: threading.Event, timeout: float = 2.0) -> bool:
 # ---------------------------------------------------------------------------
 # Test cases
 # ---------------------------------------------------------------------------
+
 
 class TestCheckForUpdate:
     def test_newer_version_calls_callback(self):
@@ -103,8 +105,10 @@ class TestCheckForUpdate:
             t.run = _run_and_set  # type: ignore[method-assign]
             return t
 
-        with patch("urllib.request.urlopen", side_effect=OSError("no network")), \
-                patch("threading.Thread", side_effect=_patched_thread):
+        with (
+            patch("urllib.request.urlopen", side_effect=OSError("no network")),
+            patch("threading.Thread", side_effect=_patched_thread),
+        ):
             check_for_update("v1.0.0", lambda v: None, on_error=None)
 
         _wait_for(done)  # ensure thread finished without raising

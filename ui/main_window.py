@@ -164,9 +164,7 @@ class MainWindowQt(QMainWindow):
 
     _accessible_factory_installed: bool = False
 
-    def __init__(
-        self, audio_player: AudioPlayer, segment_manager: SegmentManager
-    ) -> None:
+    def __init__(self, audio_player: AudioPlayer, segment_manager: SegmentManager) -> None:
         super().__init__()
 
         # Install QAccessible factory once per process (requires QApplication).
@@ -219,9 +217,7 @@ class MainWindowQt(QMainWindow):
         self.audio_player.set_tempo(initial_tempo / 100.0)
 
         # Apply pitch-preserving setting
-        self.audio_player.set_pitch_preserving(
-            bool(self.settings.get("pitch_preserving", False))
-        )
+        self.audio_player.set_pitch_preserving(bool(self.settings.get("pitch_preserving", False)))
 
     def showEvent(self, event) -> None:
         """Give btn_open initial keyboard focus so Space/Enter work immediately."""
@@ -276,9 +272,7 @@ class MainWindowQt(QMainWindow):
         self.slider_position.valueChanged.connect(self.on_seek)
         self.lbl_time = QLabel("00:00 / 00:00")
         self.lbl_time.setAccessibleName("Temps de lecture")
-        self.lbl_time.setAccessibleDescription(
-            "Position actuelle et durée totale au format mm:ss."
-        )
+        self.lbl_time.setAccessibleDescription("Position actuelle et durée totale au format mm:ss.")
         position_layout.addWidget(self.lbl_position)
         position_layout.addWidget(self.slider_position)
         position_layout.addWidget(self.lbl_time)
@@ -314,9 +308,7 @@ class MainWindowQt(QMainWindow):
         self.slider_tempo.valueChanged.connect(self.on_tempo_change)
         self.lbl_tempo_value = QLabel("100 %")
         self.lbl_tempo_value.setAccessibleName("Valeur du tempo")
-        self.lbl_tempo_value.setAccessibleDescription(
-            "Vitesse de lecture actuelle en pourcentage."
-        )
+        self.lbl_tempo_value.setAccessibleDescription("Vitesse de lecture actuelle en pourcentage.")
         self.lbl_tempo_value.setMaximumWidth(50)
         tempo_layout.addWidget(self.lbl_tempo)
         tempo_layout.addWidget(self.slider_tempo)
@@ -338,9 +330,7 @@ class MainWindowQt(QMainWindow):
         self.slider_pitch.valueChanged.connect(self.on_pitch_change)
         self.lbl_pitch_value = QLabel("0 dt")
         self.lbl_pitch_value.setAccessibleName("Valeur de la tonalité")
-        self.lbl_pitch_value.setAccessibleDescription(
-            "Décalage de tonalité actuel en demi-tons."
-        )
+        self.lbl_pitch_value.setAccessibleDescription("Décalage de tonalité actuel en demi-tons.")
         self.lbl_pitch_value.setMaximumWidth(50)
         pitch_layout.addWidget(self.lbl_pitch)
         pitch_layout.addWidget(self.slider_pitch)
@@ -348,9 +338,7 @@ class MainWindowQt(QMainWindow):
 
         # ── Row 5b: Pitch-preserving tempo checkbox ─────────────────────
         self.chk_pitch_preserving = QCheckBox()
-        self.chk_pitch_preserving.setChecked(
-            bool(self.settings.get("pitch_preserving", False))
-        )
+        self.chk_pitch_preserving.setChecked(bool(self.settings.get("pitch_preserving", False)))
         self.chk_pitch_preserving.toggled.connect(self._on_pitch_preserving_toggled)
 
         # ── Waveform widget ────────────────────────────────────────────
@@ -358,8 +346,7 @@ class MainWindowQt(QMainWindow):
         self.waveform_widget.setMinimumHeight(80)
         self.waveform_widget.setAccessibleName("Forme d'onde")
         self.waveform_widget.setAccessibleDescription(
-            "Représentation graphique du signal audio. "
-            "Cliquez pour positionner la lecture."
+            "Représentation graphique du signal audio. " "Cliquez pour positionner la lecture."
         )
         self.waveform_widget.seek_requested.connect(self._on_waveform_seek)
 
@@ -469,7 +456,8 @@ class MainWindowQt(QMainWindow):
         self.btn_stop.setText(tr("btn_stop"))
         self.btn_stop.setAccessibleName(tr("btn_stop"))
         self.btn_stop.setAccessibleDescription(
-            "Arrêter la lecture et revenir au début." if get_language() == "fr"
+            "Arrêter la lecture et revenir au début."
+            if get_language() == "fr"
             else "Stop playback and return to the beginning."
         )
         self.lbl_volume.setText(tr("lbl_volume"))
@@ -507,8 +495,7 @@ class MainWindowQt(QMainWindow):
         )
         self.btn_clear_ab.setText(tr("btn_clear_ab"))
         self.btn_clear_ab.setAccessibleName(
-            "Effacer les points A et B" if get_language() == "fr"
-            else "Clear A and B points"
+            "Effacer les points A et B" if get_language() == "fr" else "Clear A and B points"
         )
         self.btn_clear_ab.setAccessibleDescription(
             "Effacer les points de boucle A et B et désactiver la boucle A–B."
@@ -517,8 +504,7 @@ class MainWindowQt(QMainWindow):
         )
         self.chk_loop.setText(tr("lbl_loop"))
         self.chk_loop.setAccessibleName(
-            "Case à cocher boucle A-B" if get_language() == "fr"
-            else "A-B loop checkbox"
+            "Case à cocher boucle A-B" if get_language() == "fr" else "A-B loop checkbox"
         )
         self.chk_loop.setAccessibleDescription(
             "Activer ou désactiver la répétition en boucle entre les points A et B."
@@ -530,9 +516,7 @@ class MainWindowQt(QMainWindow):
         self.lbl_pitch.setText(tr("lbl_pitch"))
 
         self.chk_pitch_preserving.setText(tr("chk_pitch_preserving_main"))
-        self.chk_pitch_preserving.setAccessibleName(
-            tr("settings_pitch_preserving_accessible_name")
-        )
+        self.chk_pitch_preserving.setAccessibleName(tr("settings_pitch_preserving_accessible_name"))
         self.chk_pitch_preserving.setAccessibleDescription(
             tr("settings_pitch_preserving_accessible_desc")
         )
@@ -557,9 +541,7 @@ class MainWindowQt(QMainWindow):
 
         # ── File menu ────────────────────────────────────────────────────
         file_menu: QMenu = menubar.addMenu(tr("menu_file"))
-        file_menu.setAccessibleName(
-            "Menu Fichier" if get_language() == "fr" else "File menu"
-        )
+        file_menu.setAccessibleName("Menu Fichier" if get_language() == "fr" else "File menu")
 
         self.act_open = QAction(tr("menu_open"), self)
         self.act_open.triggered.connect(self.on_open_file)
@@ -567,8 +549,7 @@ class MainWindowQt(QMainWindow):
 
         self.recent_menu = QMenu(tr("menu_recent"), self)
         self.recent_menu.setAccessibleName(
-            "Sous-menu des fichiers récents" if get_language() == "fr"
-            else "Recent files submenu"
+            "Sous-menu des fichiers récents" if get_language() == "fr" else "Recent files submenu"
         )
         file_menu.addMenu(self.recent_menu)
         self._rebuild_recent_menu()
@@ -596,9 +577,7 @@ class MainWindowQt(QMainWindow):
 
         # ── Edit menu (Undo / Redo) ──────────────────────────────────────
         edit_menu: QMenu = menubar.addMenu(tr("menu_edit"))
-        edit_menu.setAccessibleName(
-            "Menu Édition" if get_language() == "fr" else "Edit menu"
-        )
+        edit_menu.setAccessibleName("Menu Édition" if get_language() == "fr" else "Edit menu")
 
         self.act_undo = QAction(tr("menu_undo"), self)
         self.act_undo.setShortcut(QKeySequence("Ctrl+Z"))
@@ -676,7 +655,8 @@ class MainWindowQt(QMainWindow):
         # Language submenu
         lang_menu: QMenu = QMenu(tr("menu_language"), self)
         lang_menu.setAccessibleName(
-            "Sous-menu de sélection de la langue" if get_language() == "fr"
+            "Sous-menu de sélection de la langue"
+            if get_language() == "fr"
             else "Language selection submenu"
         )
 
@@ -696,9 +676,7 @@ class MainWindowQt(QMainWindow):
 
         # ── Help menu ────────────────────────────────────────────────────
         help_menu: QMenu = menubar.addMenu(tr("menu_help"))
-        help_menu.setAccessibleName(
-            "Menu Aide" if get_language() == "fr" else "Help menu"
-        )
+        help_menu.setAccessibleName("Menu Aide" if get_language() == "fr" else "Help menu")
 
         act_about = QAction(tr("menu_about"), self)
         act_about.triggered.connect(self._on_about)
@@ -714,7 +692,7 @@ class MainWindowQt(QMainWindow):
                 f"développé par <b>BLIND SYSTEMS</b> pour l'association "
                 f"<b>Culture Musique</b>.</p>"
                 f"<p>Licence : Apache 2.0 &mdash; &copy; 2025 BLIND SYSTEMS.</p>"
-                f"<p><a href=\"https://www.blindsystems.org\">www.blindsystems.org</a></p>"
+                f'<p><a href="https://www.blindsystems.org">www.blindsystems.org</a></p>'
             )
         else:
             body = (
@@ -724,7 +702,7 @@ class MainWindowQt(QMainWindow):
                 f"<b>BLIND SYSTEMS</b> for the <b>Culture Musique</b> "
                 f"association.</p>"
                 f"<p>License: Apache 2.0 &mdash; &copy; 2025 BLIND SYSTEMS.</p>"
-                f"<p><a href=\"https://www.blindsystems.org\">www.blindsystems.org</a></p>"
+                f'<p><a href="https://www.blindsystems.org">www.blindsystems.org</a></p>'
             )
         QMessageBox.about(self, tr("dlg_about_title"), body)
 
@@ -739,9 +717,7 @@ class MainWindowQt(QMainWindow):
             return
         for path_str in recent:
             act = QAction(path_str, self)
-            act.triggered.connect(
-                lambda checked=False, p=path_str: self._open_recent(p)
-            )
+            act.triggered.connect(lambda checked=False, p=path_str: self._open_recent(p))
             self.recent_menu.addAction(act)
 
     def _open_recent(self, path_str: str) -> None:
@@ -801,15 +777,11 @@ class MainWindowQt(QMainWindow):
             "volume_down": lambda: self.slider_volume.setValue(
                 max(0, self.slider_volume.value() - 5)
             ),
-            "tempo_up": lambda: self.slider_tempo.setValue(
-                min(200, self.slider_tempo.value() + 5)
-            ),
+            "tempo_up": lambda: self.slider_tempo.setValue(min(200, self.slider_tempo.value() + 5)),
             "tempo_down": lambda: self.slider_tempo.setValue(
                 max(50, self.slider_tempo.value() - 5)
             ),
-            "pitch_up": lambda: self.slider_pitch.setValue(
-                min(12, self.slider_pitch.value() + 1)
-            ),
+            "pitch_up": lambda: self.slider_pitch.setValue(min(12, self.slider_pitch.value() + 1)),
             "pitch_down": lambda: self.slider_pitch.setValue(
                 max(-12, self.slider_pitch.value() - 1)
             ),
@@ -840,9 +812,7 @@ class MainWindowQt(QMainWindow):
         self._save_settings_timer = QTimer(self)
         self._save_settings_timer.setSingleShot(True)
         self._save_settings_timer.setInterval(500)
-        self._save_settings_timer.timeout.connect(
-            lambda: save_settings(self.settings)
-        )
+        self._save_settings_timer.timeout.connect(lambda: save_settings(self.settings))
 
         # Pitch debounce: apply pitch shift 150 ms after the last slider move.
         self._pitch_debounce_timer = QTimer(self)
@@ -851,9 +821,7 @@ class MainWindowQt(QMainWindow):
         self._pitch_debounce_timer.timeout.connect(
             lambda: self.audio_player.apply_pitch_async(
                 lambda: QTimer.singleShot(
-                    0, lambda: self.audio_player.set_position(
-                        self.audio_player.get_position()
-                    )
+                    0, lambda: self.audio_player.set_position(self.audio_player.get_position())
                 )
             )
         )
@@ -865,9 +833,7 @@ class MainWindowQt(QMainWindow):
         self._tempo_debounce_timer.timeout.connect(
             lambda: self.audio_player.apply_pitch_async(
                 lambda: QTimer.singleShot(
-                    0, lambda: self.audio_player.set_position(
-                        self.audio_player.get_position()
-                    )
+                    0, lambda: self.audio_player.set_position(self.audio_player.get_position())
                 )
             )
         )
@@ -921,12 +887,19 @@ class MainWindowQt(QMainWindow):
     def _set_ui_enabled(self, enabled: bool) -> None:
         """Active ou désactive les contrôles principaux de l'UI."""
         for widget in (
-            self.btn_play, self.btn_stop,
-            self.slider_volume, self.slider_position,
-            self.slider_tempo, self.slider_pitch,
-            self.btn_set_a, self.btn_set_b, self.btn_clear_ab,
-            self.chk_loop, self.btn_save_segment,
-            self.btn_export_config, self.btn_import_config,
+            self.btn_play,
+            self.btn_stop,
+            self.slider_volume,
+            self.slider_position,
+            self.slider_tempo,
+            self.slider_pitch,
+            self.btn_set_a,
+            self.btn_set_b,
+            self.btn_clear_ab,
+            self.chk_loop,
+            self.btn_save_segment,
+            self.btn_export_config,
+            self.btn_import_config,
             self.segment_list_widget,
         ):
             widget.setEnabled(enabled)
@@ -977,8 +950,7 @@ class MainWindowQt(QMainWindow):
         self._set_ui_enabled(True)
         self.lbl_status.setText(tr("status_load_error"))
         QMessageBox.critical(
-            self, tr("dlg_error_title"),
-            f"Impossible de charger le fichier :\n{message}"
+            self, tr("dlg_error_title"), f"Impossible de charger le fichier :\n{message}"
         )
 
     def on_play_pause_toggle(self) -> None:
@@ -1029,14 +1001,14 @@ class MainWindowQt(QMainWindow):
             self.btn_play.setText(tr("btn_pause"))
             self.btn_play.setAccessibleName(tr("btn_pause"))
             self.btn_play.setAccessibleDescription(
-                "Mettre la lecture en pause." if get_language() == "fr"
-                else "Pause audio playback."
+                "Mettre la lecture en pause." if get_language() == "fr" else "Pause audio playback."
             )
         else:
             self.btn_play.setText(tr("btn_play"))
             self.btn_play.setAccessibleName(tr("btn_play"))
             self.btn_play.setAccessibleDescription(
-                "Démarrer ou reprendre la lecture audio." if get_language() == "fr"
+                "Démarrer ou reprendre la lecture audio."
+                if get_language() == "fr"
                 else "Start or resume audio playback."
             )
 
@@ -1050,9 +1022,7 @@ class MainWindowQt(QMainWindow):
     def on_seek(self, value: int) -> None:
         self.audio_player.set_position(float(value))
         duration = self.audio_player.get_duration()
-        announce_text = (
-            f"{self._format_time(value)} / {self._format_time(duration)}"
-        )
+        announce_text = f"{self._format_time(value)} / {self._format_time(duration)}"
         self.lbl_time.setText(announce_text)
         # The TimeSlider accessibility factory reads this property and
         # exposes it as the slider's value to AT, so JAWS/NVDA speak
@@ -1073,17 +1043,13 @@ class MainWindowQt(QMainWindow):
         current_pos = self.audio_player.get_position()
         self.point_a = current_pos
         self.waveform_widget.set_point_a(current_pos)
-        self.lbl_status.setText(
-            tr("status_point_a", time=self._format_time(current_pos))
-        )
+        self.lbl_status.setText(tr("status_point_a", time=self._format_time(current_pos)))
 
     def on_set_point_b(self) -> None:
         current_pos = self.audio_player.get_position()
         self.point_b = current_pos
         self.waveform_widget.set_point_b(current_pos)
-        self.lbl_status.setText(
-            tr("status_point_b", time=self._format_time(current_pos))
-        )
+        self.lbl_status.setText(tr("status_point_b", time=self._format_time(current_pos)))
 
     def on_clear_points(self, update_status: bool = True) -> None:
         self.point_a = None
@@ -1105,13 +1071,11 @@ class MainWindowQt(QMainWindow):
         announce_text = f"{value}%"
         self.lbl_tempo_value.setText(announce_text)
         self.slider_tempo.setAccessibleDescription(announce_text)
-        self.slider_tempo.setAccessibleName(
-            f"{tr('lbl_tempo').rstrip(':')} : {announce_text}"
-        )
+        self.slider_tempo.setAccessibleName(f"{tr('lbl_tempo').rstrip(':')} : {announce_text}")
         if hasattr(QAccessible, "announce"):
             QAccessible.announce(
                 self.slider_tempo,
-                QAccessible.AnnouncementPriority.Assertive,  # type: ignore[attr-defined]
+                QAccessible.AnnouncementPriority.Assertive,
                 announce_text,
             )
         # Persist the tempo so it survives app restart.
@@ -1127,13 +1091,11 @@ class MainWindowQt(QMainWindow):
         announce_text = f"{value:+d} st"
         self.lbl_pitch_value.setText(announce_text)
         self.slider_pitch.setAccessibleDescription(announce_text)
-        self.slider_pitch.setAccessibleName(
-            f"{tr('lbl_pitch').rstrip(':')} : {announce_text}"
-        )
+        self.slider_pitch.setAccessibleName(f"{tr('lbl_pitch').rstrip(':')} : {announce_text}")
         if hasattr(QAccessible, "announce"):
             QAccessible.announce(
                 self.slider_pitch,
-                QAccessible.AnnouncementPriority.Assertive,  # type: ignore[attr-defined]
+                QAccessible.AnnouncementPriority.Assertive,
                 announce_text,
             )
         self.audio_player.set_pitch_semitones(float(value))
@@ -1172,10 +1134,12 @@ class MainWindowQt(QMainWindow):
             self.already_looped = False
             self.chk_loop.setChecked(True)
             self.lbl_status.setText(
-                tr("status_segment_jumped",
+                tr(
+                    "status_segment_jumped",
                     name=segment.name,
                     start=self._format_time(segment.start_sec),
-                    end=self._format_time(segment.end_sec))
+                    end=self._format_time(segment.end_sec),
+                )
             )
 
     def on_next_segment(self) -> None:
@@ -1184,8 +1148,11 @@ class MainWindowQt(QMainWindow):
         segments = self.segment_manager.list_segments()
         # Find the first segment whose start is strictly after the current position.
         candidate = next(
-            (seg for seg in sorted(segments, key=lambda x: x.start_sec)
-             if seg.start_sec > pos + 0.1),
+            (
+                seg
+                for seg in sorted(segments, key=lambda x: x.start_sec)
+                if seg.start_sec > pos + 0.1
+            ),
             None,
         )
         if candidate:
@@ -1199,8 +1166,7 @@ class MainWindowQt(QMainWindow):
         segments = self.segment_manager.list_segments()
         # Find the last segment whose start is strictly before the current position.
         candidates = [
-            seg for seg in sorted(segments, key=lambda x: x.start_sec)
-            if seg.start_sec < pos - 0.1
+            seg for seg in sorted(segments, key=lambda x: x.start_sec) if seg.start_sec < pos - 0.1
         ]
         if candidates:
             self.on_segment_selected(candidates[-1])
@@ -1230,10 +1196,12 @@ class MainWindowQt(QMainWindow):
             self.waveform_widget.set_segments(self.segment_manager.list_segments())
             save_segments(self.current_audio_path, self.segment_manager)
             self.lbl_status.setText(
-                tr("status_segment_saved",
+                tr(
+                    "status_segment_saved",
                     name=name,
                     start=self._format_time(self.point_a),
-                    end=self._format_time(self.point_b))
+                    end=self._format_time(self.point_b),
+                )
             )
 
     def _on_segments_changed(self) -> None:
@@ -1295,7 +1263,8 @@ class MainWindowQt(QMainWindow):
         audio_data, sample_rate = self.audio_player.get_audio_snapshot()
         if audio_data is None:
             QMessageBox.critical(
-                self, tr("dlg_error_title"),
+                self,
+                tr("dlg_error_title"),
                 tr("dlg_err_export_wav", err="No audio loaded"),
             )
             return
@@ -1312,9 +1281,7 @@ class MainWindowQt(QMainWindow):
                 tr("dlg_exported_title"),
                 tr("dlg_wav_exported", name=segment.name, path=filename),
             )
-            self.lbl_status.setText(
-                tr("status_wav_exported", name=segment.name)
-            )
+            self.lbl_status.setText(tr("status_wav_exported", name=segment.name))
         except Exception as exc:
             QMessageBox.critical(
                 self,
@@ -1338,7 +1305,8 @@ class MainWindowQt(QMainWindow):
         audio_data, sample_rate = self.audio_player.get_audio_snapshot()
         if audio_data is None:
             QMessageBox.critical(
-                self, tr("dlg_error_title"),
+                self,
+                tr("dlg_error_title"),
                 tr("dlg_err_export_mp3", err="No audio loaded"),
             )
             return
@@ -1355,9 +1323,7 @@ class MainWindowQt(QMainWindow):
                 tr("dlg_exported_title"),
                 tr("dlg_wav_exported", name=segment.name, path=filename),
             )
-            self.lbl_status.setText(
-                tr("status_mp3_exported", name=segment.name)
-            )
+            self.lbl_status.setText(tr("status_mp3_exported", name=segment.name))
         except Exception as exc:
             QMessageBox.critical(
                 self,
@@ -1390,9 +1356,7 @@ class MainWindowQt(QMainWindow):
             )
             self.lbl_status.setText(tr("status_config_exported", path=filename))
         except Exception as exc:
-            QMessageBox.critical(
-                self, tr("dlg_error_title"), tr("dlg_err_export_config", err=exc)
-            )
+            QMessageBox.critical(self, tr("dlg_error_title"), tr("dlg_err_export_config", err=exc))
 
     def on_import_config(self) -> None:
         filename, _ = QFileDialog.getOpenFileName(
@@ -1419,13 +1383,10 @@ class MainWindowQt(QMainWindow):
                 self, tr("dlg_imported_title"), tr("dlg_config_loaded", path=filename)
             )
             self.lbl_status.setText(
-                tr("status_config_imported",
-                   count=len(self.segment_manager.list_segments()))
+                tr("status_config_imported", count=len(self.segment_manager.list_segments()))
             )
         except Exception as exc:
-            QMessageBox.critical(
-                self, tr("dlg_error_title"), tr("dlg_err_import_config", err=exc)
-            )
+            QMessageBox.critical(self, tr("dlg_error_title"), tr("dlg_err_import_config", err=exc))
 
     def on_export_segments_csv(self) -> None:
         """Export segments to a CSV file."""
@@ -1440,9 +1401,7 @@ class MainWindowQt(QMainWindow):
         output_path = Path(filename)
         fmt = "txt" if output_path.suffix.lower() == ".txt" else "csv"
         try:
-            export_segments_text(
-                self.current_audio_path, self.segment_manager, output_path, fmt
-            )
+            export_segments_text(self.current_audio_path, self.segment_manager, output_path, fmt)
             QMessageBox.information(
                 self, tr("dlg_exported_title"), tr("dlg_segments_exported", path=filename)
             )
@@ -1508,9 +1467,7 @@ class MainWindowQt(QMainWindow):
         self.slider_position.blockSignals(False)
 
         # Format the time label as mm:ss / mm:ss (human-readable).
-        time_text = (
-            f"{self._format_time(current_pos)} / {self._format_time(duration)}"
-        )
+        time_text = f"{self._format_time(current_pos)} / {self._format_time(duration)}"
         self.lbl_time.setText(time_text)
 
         # ── Slider accessibility ───────────────────────────────────────────
@@ -1540,9 +1497,7 @@ class MainWindowQt(QMainWindow):
         now = time.monotonic()
         if interval > 0 and (now - self._last_announce_time) >= interval:
             self._last_announce_time = now
-            self.lbl_time.setAccessibleDescription(
-                f"Position actuelle : {pos_str} sur {dur_str}"
-            )
+            self.lbl_time.setAccessibleDescription(f"Position actuelle : {pos_str} sur {dur_str}")
 
         # A–B loop logic
         if (
@@ -1573,9 +1528,7 @@ class MainWindowQt(QMainWindow):
                 self.audio_player.stop()
                 self._save_practice_history()
                 self.practice_panel.stop_session()
-                self.lbl_status.setText(
-                    tr("status_session_done", count=self._session_loop_count)
-                )
+                self.lbl_status.setText(tr("status_session_done", count=self._session_loop_count))
                 return
 
             # Apply progressive tempo
@@ -1612,9 +1565,7 @@ class MainWindowQt(QMainWindow):
         loops = self._session_loop_count
         if loops == 0 or self.current_audio_path is None:
             return
-        avg_tempo = (
-            self._session_tempo_sum / loops if loops > 0 else 1.0
-        )
+        avg_tempo = self._session_tempo_sum / loops if loops > 0 else 1.0
         elapsed_str = session.get_elapsed() if session else "00:00:00"
         parts = elapsed_str.split(":")
         try:
@@ -1637,6 +1588,7 @@ class MainWindowQt(QMainWindow):
     def _check_updates_worker(self) -> None:
         """Synchronous update check — runs in a background thread."""
         import urllib.request as _urlreq
+
         _URL = "https://api.github.com/repos/aminekhettat/Back-Office-Player/releases/latest"
         try:
             req = _urlreq.Request(_URL, headers={"User-Agent": "BOP-update-checker/1.0"})
@@ -1654,6 +1606,7 @@ class MainWindowQt(QMainWindow):
     def _start_update_check(self) -> None:
         """Lance la vérification des mises à jour en arrière-plan."""
         import threading as _threading
+
         t = _threading.Thread(target=self._check_updates_worker, daemon=True)
         t.start()
 
@@ -1672,8 +1625,15 @@ class MainWindowQt(QMainWindow):
                 if url.isLocalFile():
                     suffix = Path(url.toLocalFile()).suffix.lower()
                     if suffix in {
-                        ".mp3", ".wav", ".flac", ".ogg", ".aac",
-                        ".m4a", ".wma", ".opus", ".aiff",
+                        ".mp3",
+                        ".wav",
+                        ".flac",
+                        ".ogg",
+                        ".aac",
+                        ".m4a",
+                        ".wma",
+                        ".opus",
+                        ".aiff",
                     }:
                         event.acceptProposedAction()
                         return
@@ -1687,8 +1647,15 @@ class MainWindowQt(QMainWindow):
                     path = Path(url.toLocalFile())
                     suffix = path.suffix.lower()
                     if suffix in {
-                        ".mp3", ".wav", ".flac", ".ogg", ".aac",
-                        ".m4a", ".wma", ".opus", ".aiff",
+                        ".mp3",
+                        ".wav",
+                        ".flac",
+                        ".ogg",
+                        ".aac",
+                        ".m4a",
+                        ".wma",
+                        ".opus",
+                        ".aiff",
                     }:
                         self._load_audio_file(path)
                         event.acceptProposedAction()

@@ -32,6 +32,7 @@ pytestmark = pytest.mark.benchmark
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_audio(n_seconds: float = 5.0) -> np.ndarray:
     t = np.linspace(0, n_seconds, int(SAMPLE_RATE * n_seconds), endpoint=False)
     return (0.5 * np.sin(2 * np.pi * 440 * t)).astype(np.float32)
@@ -64,6 +65,7 @@ def _process_block(
 # Benchmarks
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.benchmark
 def test_block_processing_at_normal_speed() -> None:
     """Normal tempo (1.0×): average block processing < deadline."""
@@ -78,9 +80,9 @@ def test_block_processing_at_normal_speed() -> None:
     elapsed = time.perf_counter() - start
     avg_ms = (elapsed / ITERATIONS) * 1000
 
-    assert avg_ms < BLOCK_DEADLINE_S * 1000, (
-        f"Normal-speed block too slow: {avg_ms:.3f} ms (limit {BLOCK_DEADLINE_S * 1000:.1f} ms)"
-    )
+    assert (
+        avg_ms < BLOCK_DEADLINE_S * 1000
+    ), f"Normal-speed block too slow: {avg_ms:.3f} ms (limit {BLOCK_DEADLINE_S * 1000:.1f} ms)"
 
 
 @pytest.mark.benchmark
@@ -97,9 +99,9 @@ def test_block_processing_at_half_speed() -> None:
     elapsed = time.perf_counter() - start
     avg_ms = (elapsed / ITERATIONS) * 1000
 
-    assert avg_ms < BLOCK_DEADLINE_S * 1000, (
-        f"Half-speed block too slow: {avg_ms:.3f} ms (limit {BLOCK_DEADLINE_S * 1000:.1f} ms)"
-    )
+    assert (
+        avg_ms < BLOCK_DEADLINE_S * 1000
+    ), f"Half-speed block too slow: {avg_ms:.3f} ms (limit {BLOCK_DEADLINE_S * 1000:.1f} ms)"
 
 
 @pytest.mark.benchmark
@@ -116,9 +118,9 @@ def test_block_processing_at_double_speed() -> None:
     elapsed = time.perf_counter() - start
     avg_ms = (elapsed / ITERATIONS) * 1000
 
-    assert avg_ms < BLOCK_DEADLINE_S * 1000, (
-        f"Double-speed block too slow: {avg_ms:.3f} ms (limit {BLOCK_DEADLINE_S * 1000:.1f} ms)"
-    )
+    assert (
+        avg_ms < BLOCK_DEADLINE_S * 1000
+    ), f"Double-speed block too slow: {avg_ms:.3f} ms (limit {BLOCK_DEADLINE_S * 1000:.1f} ms)"
 
 
 @pytest.mark.benchmark
