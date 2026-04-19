@@ -15,7 +15,7 @@ Import this module wherever the version string is needed::
              terms of the Apache License, Version 2.0.
 """
 
-__version__ = "1.1.3"
+__version__ = "1.1.4"
 __author__ = "Amine Khettat"
 __organization__ = "BLIND SYSTEMS"
 __license__ = "Apache-2.0"

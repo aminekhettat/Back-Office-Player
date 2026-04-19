@@ -669,7 +669,11 @@ class MainWindowQt(QMainWindow):
         self._pitch_debounce_timer.setInterval(150)
         self._pitch_debounce_timer.timeout.connect(
             lambda: self.audio_player.apply_pitch_async(
-                lambda: QTimer.singleShot(0, lambda: None)
+                lambda: QTimer.singleShot(
+                    0, lambda: self.audio_player.set_position(
+                        self.audio_player.get_position()
+                    )
+                )
             )
         )
 
@@ -679,7 +683,11 @@ class MainWindowQt(QMainWindow):
         self._tempo_debounce_timer.setInterval(150)
         self._tempo_debounce_timer.timeout.connect(
             lambda: self.audio_player.apply_pitch_async(
-                lambda: QTimer.singleShot(0, lambda: None)
+                lambda: QTimer.singleShot(
+                    0, lambda: self.audio_player.set_position(
+                        self.audio_player.get_position()
+                    )
+                )
             )
         )
 
@@ -690,7 +698,8 @@ class MainWindowQt(QMainWindow):
     # ================================================================== #
     def on_open_file(self) -> None:
         """Open a file dialog and load the selected audio file."""
-        initial_dir = self.settings.get("last_opened_folder", str(Path.cwd()))
+        raw_dir = self.settings.get("last_opened_folder", "")
+        initial_dir = raw_dir if raw_dir and Path(raw_dir).is_dir() else str(Path.home())
         filename, _ = QFileDialog.getOpenFileName(
             self,
             tr("dlg_open_audio_title"),
@@ -854,6 +863,7 @@ class MainWindowQt(QMainWindow):
         announce_text = (
             f"{self._format_time(value)} / {self._format_time(duration)}"
         )
+        self.lbl_time.setText(announce_text)
         self.slider_position.setAccessibleDescription(announce_text)
         # Dynamically update the name so the formatted time is read when
         # focus lands on the slider (in addition to the live announcement).

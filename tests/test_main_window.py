@@ -157,6 +157,30 @@ class TestOnOpenFile:
         w.on_open_file()
         assert calls == [Path(audio_file)]
 
+    def test_open_file_uses_existing_dir(self, window, monkeypatch, tmp_path):
+        """on_open_file passes the saved dir to the dialog when it exists."""
+        w, _ = window
+        w.settings["last_opened_folder"] = str(tmp_path)
+        captured = []
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QFileDialog.getOpenFileName",
+            lambda parent, title, dir_, filter_: captured.append(dir_) or ("", ""),
+        )
+        w.on_open_file()
+        assert captured[0] == str(tmp_path)
+
+    def test_open_file_falls_back_to_home_when_dir_missing(self, window, monkeypatch, tmp_path):
+        """on_open_file uses Path.home() when the saved dir does not exist."""
+        w, _ = window
+        w.settings["last_opened_folder"] = str(tmp_path / "nonexistent")
+        captured = []
+        monkeypatch.setattr(
+            "PySide6.QtWidgets.QFileDialog.getOpenFileName",
+            lambda parent, title, dir_, filter_: captured.append(dir_) or ("", ""),
+        )
+        w.on_open_file()
+        assert captured[0] == str(Path.home())
+
 
 # ---------------------------------------------------------------------------
 # _load_audio_file
@@ -312,6 +336,13 @@ class TestVolumeAndSeek:
         w.on_seek(65)
         desc = w.slider_position.accessibleDescription()
         assert "01:05" in desc  # 65 s = 1 min 5 s
+
+    def test_on_seek_updates_lbl_time(self, window):
+        """on_seek() immediately updates the time label so it stays in sync with the slider."""
+        w, player = window
+        player.get_duration.return_value = 120.0
+        w.on_seek(65)
+        assert "01:05" in w.lbl_time.text()
 
 
 # ---------------------------------------------------------------------------
