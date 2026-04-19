@@ -1,35 +1,83 @@
-# Back-Office Player (BOP) — Audio Practice Tool
+# Back-Office Player (BOP)
+
+> **Accessible audio practice tool for music students — A/B looping, named segments, progressive tempo, and full screen-reader support.**
+
+**Version 2.0.0** · Python 3.10+ · PySide6 · Windows · [Documentation](docs/) · [Quickstart](#quick-start) · [Release Notes](#release-history)
+
+---
+
+## What Is Back-Office Player?
 
 **Back-Office Player (BOP)** is a Windows desktop application written in Python that helps music students practise at home using rehearsal recordings.
 
-**Current version:** 2.0.0 — developed by [BLIND SYSTEMS](https://www.blindsystems.org) for the students of the [Culture Musique](https://www.sabamusic.fr) association.
+It provides an A–B loop engine, named segment management, tempo and pitch control, and a progressive-tempo practice mode — all built on a native audio engine (no external player required) and designed from the ground up for keyboard and screen-reader users.
+
+Developed by [BLIND SYSTEMS](https://www.blindsystems.org) for the students of the [Culture Musique](https://www.sabamusic.fr) association.
+
+---
+
+## Why This Project?
+
+| Gap | How BOP fills it |
+|-----|-----------------|
+| No free tool combines A/B loop + progressive tempo + pitch shift in one place | All three features tightly integrated in a single application |
+| Third-party engines (VLC) break silently across Windows updates | Native audio engine built on `librosa` + `sounddevice` — zero external dependencies |
+| Practice sessions leave no trace for self-assessment | Full session history (file, duration, loops, tempo) with CSV export |
+| Segment work is lost between sessions | Named segments and practice configs saved to portable `.bop` files |
+| Speed and pitch are coupled in most players | Independent tempo (50–200 %) and pitch (±12 st) controls, with optional pitch-preserving time-stretch |
+| The application is also designed for visually impaired musicians | Full keyboard navigation and screen-reader support (NVDA, JAWS) as a first-class requirement |
 
 ---
 
 ## Key Features
 
-- **Native audio engine** — no VLC required. Playback powered by `librosa` + `sounddevice`.
-- **Transport controls** — Play, Pause, Stop with keyboard shortcuts.
-- **A–B loop** — set loop start (A) and end (B) anywhere on the timeline; loop continuously or a fixed number of times.
-- **Named segments** — save any A–B region as a named segment, then jump to it with one key press.
-- **Tempo control** — slider from 50 % to 200 %; remembers your last value across sessions.
-- **Pitch control** — shift pitch ±12 semitones independently of tempo.
-- **Pitch-preserving tempo** — optional time-stretching mode that changes speed without affecting pitch (via `librosa`).
-- **Progressive tempo** — practice panel that automatically ramps the tempo up after each completed loop.
-- **Waveform display** — interactive waveform with A/B markers and playhead; click to seek.
-- **Practice history** — every session is logged (file, duration, loops, tempo); viewable and exportable as CSV.
-- **Segment export** — export any segment to WAV or MP3.
-- **Export / import config** — save all segments + settings to a `.bop` file and share or reload them.
-- **Undo / redo** — Ctrl+Z / Ctrl+Y for segment add and delete operations.
-- **Themes** — default, dark, and high-contrast colour themes.
-- **Bilingual UI** — French and English, switchable at runtime from the Settings menu.
-- **Accessible** — full keyboard and screen-reader (NVDA, JAWS) support.
+### Transport & Looping
+- **A–B loop** — set loop start (A) and end (B) anywhere on the timeline; loop continuously or a fixed number of times
+- **Named segments** — save any A–B region as a named segment; jump to it with one key press
+- **Waveform display** — interactive RMS waveform with A/B markers and playhead; click to seek
+
+### Tempo & Pitch
+- **Tempo control** — slider from 50 % to 200 %; value is saved across sessions
+- **Pitch control** — shift pitch ±12 semitones independently of tempo
+- **Pitch-preserving tempo** — optional time-stretching via `librosa`; changes speed without affecting pitch
+
+### Practice System
+- **Progressive tempo** — automatically ramps the tempo up after each completed loop
+- **Practice history** — every session is logged (file, duration, loops, tempo); viewable and exportable as CSV
+
+### Data Management
+- **Segment export** — export any segment to WAV or MP3
+- **Export / import config** — save all segments + settings to a `.bop` file and share or reload them
+- **Undo / redo** — Ctrl+Z / Ctrl+Y for segment add and delete
+
+### Interface
+- **Themes** — default, dark, and high-contrast colour themes
+- **Bilingual UI** — French and English, switchable at runtime from the Settings menu
+- **Accessible** — full keyboard and screen-reader (NVDA, JAWS) support
+
+---
+
+## Quick Start
+
+```bash
+# 1. Clone and install
+git clone https://github.com/aminekhettat/Back-Office-Player.git
+cd Back-Office-Player
+python -m venv bopenv && bopenv\Scripts\activate.bat
+pip install -r requirements.txt
+
+# 2. Launch
+python app.py
+
+# 3. Run tests
+pytest tests/ --ignore=tests/test_app.py
+```
 
 ---
 
 ## Accessibility
 
-The UI is built with **Qt (PySide6)** for screen-reader compatibility on Windows:
+The UI is built with **PySide6** for screen-reader compatibility on Windows:
 
 - All buttons, sliders, and controls have accessible names and descriptions.
 - Full keyboard navigation with Tab / Shift+Tab; explicit tab order puts transport controls first.
@@ -39,6 +87,7 @@ The UI is built with **Qt (PySide6)** for screen-reader compatibility on Windows
 - Tempo slider: **up/down arrows** in 5 % steps.
 - Status label announces every significant event (file loaded, A/B set, segment saved, etc.).
 - Position is periodically announced to screen readers (configurable interval).
+- Compatible with **NVDA**, **JAWS**.
 
 ---
 
@@ -169,7 +218,7 @@ Click **Open audio file…** or press **Ctrl+O**.
 ### Tempo & Pitch
 - **Tempo slider** (50–200 %): slows down or speeds up playback. Up/down arrows in 5 % steps. Value is saved and restored between sessions.
 - **Pitch slider** (−12 to +12 semitones): shifts pitch without changing speed.
-- Enable **Pitch-preserving tempo** in Preferences for time-stretching (changes speed without changing pitch).
+- Enable **Pitch-preserving tempo** in Preferences for time-stretching.
 
 ### Practice Session (Progressive Tempo)
 In the **Practice Session** panel you can configure:
@@ -257,7 +306,17 @@ pytest tests/ --ignore=tests/test_app.py --cov --cov-report=term-missing
 
 ---
 
-## Documentation (Sphinx)
+## Documentation
+
+| Document | Purpose |
+|----------|---------|
+| This README | Project overview, installation, and usage |
+| [CHANGELOG.md](CHANGELOG.md) | Full version-by-version change log |
+| [docs/user_manual_fr.rst](docs/user_manual_fr.rst) | User manual in French |
+| [docs/user_manual_en.rst](docs/user_manual_en.rst) | User manual in English |
+| [docs/index.rst](docs/index.rst) | Sphinx documentation root |
+
+To build HTML docs locally:
 
 ```bash
 bopenv\Scripts\activate.bat
@@ -268,9 +327,48 @@ cd docs
 
 ---
 
+## Quality Gates
+
+Every commit runs:
+
+- **Ruff** — lint and style (replaces Flake8; includes bugbear, pyupgrade, isort)
+- **Mypy** — type checking in strict mode across all source files (zero errors)
+- **Bandit** — security scan (zero findings; only B101 suppressed in test code)
+- **pytest** — full test suite with 100 % branch + line coverage threshold (602 tests)
+- **Sphinx** — HTML documentation build with `-W` (zero warnings)
+- **pip-audit** — dependency vulnerability audit
+
+CI runs on `ubuntu-latest` against Python 3.10, 3.11, and 3.12 via GitHub Actions.
+
+To run all gates locally:
+
+```bash
+pip install -r requirements-dev.txt
+ruff check .
+mypy .
+bandit -r . -c pyproject.toml
+pytest tests/ --ignore=tests/test_app.py --cov --cov-report=term-missing
+```
+
+---
+
+## Versioning
+
+This project follows [Semantic Versioning](https://semver.org/).
+
+```bash
+bump2version patch   # x.y.Z  — bug fixes
+bump2version minor   # x.Y.0  — new features
+bump2version major   # X.0.0  — breaking changes
+```
+
+The single source of truth for the version number is `__version__.py`.
+
+---
+
 ## Release History
 
-### v2.0.0 *(current)*
+### v2.0.0 *(current — 2026-04-19)*
 
 Major release — full quality overhaul and professional distribution.
 
@@ -288,19 +386,19 @@ Major release — full quality overhaul and professional distribution.
 ---
 
 ### v1.1.4
-- **Accessibility — position slider announced as time.** Introduced a custom `TimeSlider` subclass wired to a `QAccessible` factory so screen readers (JAWS, NVDA) now speak `mm:ss / mm:ss` on focus and while seeking, instead of the raw integer value.
-- **Accessibility — real-time slider announcements.** Tempo and pitch sliders now fire assertive `QAccessible.announce` events on every value change, so screen readers report the new value without the user having to re-read the component.
-- **Accessibility — button activation fix.** Resolved a regression where pressing Space or Enter on focused buttons (e.g. *Open audio file*) did nothing under JAWS: the default `play_pause` shortcut was moved from `Space` to `Ctrl+P` to stop `QShortcut` from hijacking native button activation.
-- **GUI overhaul.** Restructured the main menu bar into five standard Windows sections (File, Edit, Playback, Settings, Help), exposed Undo/Redo in the Edit menu, added an About dialog, and brought the *pitch-preserving tempo* checkbox back to the main UI next to the pitch slider.
-- **Shortcut reliability.** Menu actions and global shortcuts no longer collide: all covered shortcuts are now bound once, on their `QAction`, removing Qt's “ambiguous activation” warnings and the silent misfires they caused.
-- **Pitch slider — real-time response in tape mode.** Pitch shift is now applied directly in the playback worker via the resampling rate multiplier (`tempo × 2^(semitones/12)`), removing the 150 ms debounce + slow librosa recompute round-trip when the pitch-preserving option is off.
-- **Pitch-preserving — correct audio after restart.** When the app reopens with `pitch_preserving=true` and a saved tempo ≠ 100 %, it now pre-computes the stretched buffer as soon as a file is loaded, instead of falling back to tape-rate playback (which previously produced a detuned, “weird” sound).
-- **Position correctness across buffer swaps.** The audio engine now stores playback position in *song time* rather than a raw sample index and rescales `_current_sample_pos` whenever the active buffer length changes (pitch-preserving on/off, re-stretch, re-shift). Fixes position drift and loop-point glitches when switching modes mid-playback.
+- **Accessibility — position slider announced as time.** Introduced a custom `TimeSlider` subclass wired to a `QAccessible` factory so screen readers (JAWS, NVDA) now speak `mm:ss / mm:ss` on focus and while seeking.
+- **Accessibility — real-time slider announcements.** Tempo and pitch sliders now fire assertive `QAccessible.announce` events on every value change.
+- **Accessibility — button activation fix.** Resolved a regression where pressing Space or Enter on focused buttons did nothing under JAWS.
+- **GUI overhaul.** Restructured the main menu bar into five standard Windows sections (File, Edit, Playback, Settings, Help), exposed Undo/Redo in the Edit menu, added an About dialog.
+- **Shortcut reliability.** Menu actions and global shortcuts no longer collide.
+- **Pitch slider — real-time response in tape mode.** Pitch shift is now applied directly in the playback worker, removing the 150 ms debounce + slow librosa recompute round-trip.
+- **Pitch-preserving — correct audio after restart.** Fixes detuned playback when app reopens with `pitch_preserving=true` and a saved tempo ≠ 100 %.
+- **Position correctness across buffer swaps.** Engine now stores playback position in *song time* rather than a raw sample index.
 
 ### v1.1.1
 - Practice history: session logging (file, duration, loops, tempo) with table view and CSV export.
 - Progressive tempo: practice panel with configurable start/step/target, loop count, and loop delay.
-- Waveform display: interactive RMS waveform with playhead, A/B markers, and segment tick marks; click to seek.
+- Waveform display: interactive RMS waveform with playhead, A/B markers, and segment tick marks.
 - Pitch control: ±12 semitone shift independent of tempo.
 - Pitch-preserving tempo: optional time-stretching via librosa.
 - Segment enhancements: categories, colours, notes, move-up/down reordering.
@@ -308,7 +406,7 @@ Major release — full quality overhaul and professional distribution.
 - Undo / redo for segment add and delete (Ctrl+Z / Ctrl+Y).
 - Bilingual UI: French and English, switchable at runtime.
 - Themes: default, dark, and high-contrast.
-- Settings dialog: shortcut customisation, theme, accessibility (announce interval), audio options.
+- Settings dialog: shortcut customisation, theme, accessibility options.
 - Recent files menu.
 - Background update checker (GitHub releases).
 - Async audio loading (non-blocking UI during decode).
@@ -353,3 +451,9 @@ Before submitting a pull request:
 Apache License 2.0 — Copyright (c) 2025 BLIND SYSTEMS.
 
 See [LICENSE](LICENSE) or https://www.apache.org/licenses/LICENSE-2.0.
+
+---
+
+## Author
+
+**Amine Khettat** · [amine.khettat@blindsystems.org](mailto:amine.khettat@blindsystems.org) · [BLIND SYSTEMS](https://www.blindsystems.org)
