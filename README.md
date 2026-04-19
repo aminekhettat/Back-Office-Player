@@ -2,7 +2,7 @@
 
 **Back-Office Player (BOP)** is a Windows desktop application written in Python that helps music students practise at home using rehearsal recordings.
 
-**Current version:** 1.1.2 — developed by [BLIND SYSTEMS](https://www.blindsystems.org) for the students of the [Culture Musique](https://www.sabamusic.fr) association.
+**Current version:** 1.1.3 — developed by [BLIND SYSTEMS](https://www.blindsystems.org) for the students of the [Culture Musique](https://www.sabamusic.fr) association.
 
 ---
 

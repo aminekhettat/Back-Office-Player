@@ -1,5 +1,5 @@
 """
-Segment list widget for Back-Office Player.
+PySide6 segment list widget for Back-Office Player.
 
 This module defines the SegmentListWidget which displays a list of
 named segments and provides controls for navigation, reordering, and
@@ -9,7 +9,11 @@ management.
 :organization: BLIND SYSTEMS
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
-:version: 1.1.2
+:date: 2026-04-19
+:version: 1.1.3
+:disclaimer: Distributed on an "AS IS" basis, WITHOUT WARRANTIES OR
+             CONDITIONS OF ANY KIND. See the LICENSE file for the full
+             terms of the Apache License, Version 2.0.
 """
 
 from __future__ import annotations

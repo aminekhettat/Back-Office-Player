@@ -1,0 +1,46 @@
+{
+    // VS Code launch configuration for Back-Office Player (PySide6)
+    // Uses the project virtual-env (bopenv) and silences the SystemExit
+    // raised by sys.exit(app.exec()) so it is not reported as an error.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Back-Office Player",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/app.py",
+            "python": "${workspaceFolder}/bopenv/Scripts/python.exe",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "stopOnEntry": false,
+            // Prevent the debugger from breaking on SystemExit, which is
+            // raised intentionally by sys.exit(app.exec()) when the window
+            // is closed.
+            "exceptionOptions": [
+                {
+                    "path": [{"names": ["SystemExit"]}],
+                    "breakMode": "never"
+                }
+            ]
+        },
+        {
+            "name": "Run Tests (pytest)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "python": "${workspaceFolder}/bopenv/Scripts/python.exe",
+            "args": [
+                "tests/",
+                "--tb=short",
+                "-p", "no:qt",
+                "--ignore=tests/test_app.py",
+                "--no-cov",
+                "-v"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

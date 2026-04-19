@@ -1,15 +1,18 @@
 """
-Application entry point for Back-Office Player (Qt version).
+Application entry point for Back-Office Player (PySide6).
 
-This module initializes the main components (audio player, segment manager,
-Qt main window) and starts the Qt event loop.
+Initialises the main components (AudioPlayer, SegmentManager, MainWindowQt)
+and starts the PySide6 Qt event loop.
 
 :author: Amine Khettat
 :organization: BLIND SYSTEMS
 :copyright: (c) 2025 BLIND SYSTEMS
 :license: Apache-2.0
-:date: 2025-12-02
-:version: 1.1.2
+:date: 2026-04-19
+:version: 1.1.3
+:disclaimer: Distributed on an "AS IS" basis, WITHOUT WARRANTIES OR
+             CONDITIONS OF ANY KIND. See the LICENSE file for the full
+             terms of the Apache License, Version 2.0.
 """
 
 from __future__ import annotations
