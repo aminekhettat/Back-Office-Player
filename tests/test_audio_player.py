@@ -672,7 +672,7 @@ class TestPlaybackWorker:
 
         player = AudioPlayer()
         with player._lock:
-            player._audio_data = _EmptySliceAudio()
+            player._audio_data = _EmptySliceAudio()  # type: ignore[assignment]
             player._sample_rate = 44100
             player._duration = 1.0
             player._is_playing = True

@@ -508,13 +508,14 @@ class AudioPlayer:
                         break
 
                     # Use pitch-processed audio when available, else raw data.
-                    active_audio = (
+                    # Explicit Optional annotation: _audio_data may be cleared
+                    # by the main thread between the outer guard and this lock
+                    # acquisition (race condition — not a mypy-visible path).
+                    active_audio: np.ndarray | None = (
                         self._processed_audio
                         if self._processed_audio is not None
                         else self._audio_data
                     )
-                    # _audio_data can be cleared from the main thread between
-                    # the entry guard and here (race condition).
                     if active_audio is None:
                         break
 

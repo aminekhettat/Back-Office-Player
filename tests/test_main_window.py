@@ -1297,9 +1297,9 @@ class TestTimeSliderAccessibleFactory:
         """Factory returns a _TimeSliderAccessible for a TimeSlider instance."""
         from ui.main_window import (
             TimeSlider,
-            _TimeSliderAccessible,
             _time_slider_accessible_factory,
             _time_slider_accessibles,
+            _TimeSliderAccessible,
         )
 
         slider = TimeSlider(Qt.Orientation.Horizontal)

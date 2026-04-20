@@ -1072,10 +1072,12 @@ class MainWindowQt(QMainWindow):
         self.lbl_tempo_value.setText(announce_text)
         self.slider_tempo.setAccessibleDescription(announce_text)
         self.slider_tempo.setAccessibleName(f"{tr('lbl_tempo').rstrip(':')} : {announce_text}")
-        if hasattr(QAccessible, "announce"):
-            QAccessible.announce(
+        _announce = getattr(QAccessible, "announce", None)
+        _priority_cls = getattr(QAccessible, "AnnouncementPriority", None)
+        if _announce is not None and _priority_cls is not None:
+            _announce(
                 self.slider_tempo,
-                QAccessible.AnnouncementPriority.Assertive,
+                _priority_cls.Assertive,
                 announce_text,
             )
         # Persist the tempo so it survives app restart.
@@ -1092,10 +1094,12 @@ class MainWindowQt(QMainWindow):
         self.lbl_pitch_value.setText(announce_text)
         self.slider_pitch.setAccessibleDescription(announce_text)
         self.slider_pitch.setAccessibleName(f"{tr('lbl_pitch').rstrip(':')} : {announce_text}")
-        if hasattr(QAccessible, "announce"):
-            QAccessible.announce(
+        _announce = getattr(QAccessible, "announce", None)
+        _priority_cls = getattr(QAccessible, "AnnouncementPriority", None)
+        if _announce is not None and _priority_cls is not None:
+            _announce(
                 self.slider_pitch,
-                QAccessible.AnnouncementPriority.Assertive,
+                _priority_cls.Assertive,
                 announce_text,
             )
         self.audio_player.set_pitch_semitones(float(value))

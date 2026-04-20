@@ -89,7 +89,7 @@ def _validate_and_slice(
 
 
 def export_segment_wav(
-    audio_data: np.ndarray,
+    audio_data: np.ndarray | None,
     sample_rate: int,
     start_sec: float,
     end_sec: float,
@@ -130,7 +130,7 @@ def export_segment_wav(
 
 
 def export_segment_mp3(
-    audio_data: np.ndarray,
+    audio_data: np.ndarray | None,
     sample_rate: int,
     start_sec: float,
     end_sec: float,
