@@ -27,6 +27,7 @@ from core.audio_player_native import AudioPlayer
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _load_player(tmp_path: Path, audio: np.ndarray, sr: int) -> AudioPlayer:
     """Return an AudioPlayer with fake audio loaded (only librosa mocked)."""
     p = tmp_path / "audio.wav"
@@ -44,6 +45,7 @@ def _load_player(tmp_path: Path, audio: np.ndarray, sr: int) -> AudioPlayer:
 # ---------------------------------------------------------------------------
 # Concurrency: play / pause / stop
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestPlayPauseConcurrency:
@@ -104,6 +106,7 @@ class TestPlayPauseConcurrency:
 # Concurrency: set_position + play
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestSeekConcurrency:
     def test_concurrent_set_position_does_not_corrupt_state(
@@ -161,6 +164,7 @@ class TestSeekConcurrency:
 # Concurrency: volume + tempo writes
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestParameterConcurrency:
     def test_concurrent_volume_writes_stay_in_range(self, tmp_path, sample_audio, sample_rate):
@@ -177,10 +181,7 @@ class TestParameterConcurrency:
             except Exception as exc:
                 errors.append(exc)
 
-        threads = [
-            threading.Thread(target=_set_volume, args=(v,))
-            for v in [0, 50, 100, 200, -10]
-        ]
+        threads = [threading.Thread(target=_set_volume, args=(v,)) for v in [0, 50, 100, 200, -10]]
         for t in threads:
             t.start()
         for t in threads:
@@ -203,8 +204,7 @@ class TestParameterConcurrency:
                 errors.append(exc)
 
         threads = [
-            threading.Thread(target=_set_tempo, args=(f,))
-            for f in [0.1, 0.5, 1.0, 1.5, 2.0, 5.0]
+            threading.Thread(target=_set_tempo, args=(f,)) for f in [0.1, 0.5, 1.0, 1.5, 2.0, 5.0]
         ]
         for t in threads:
             t.start()
@@ -225,10 +225,7 @@ class TestParameterConcurrency:
                 if not (0 <= v <= 100):
                     range_errors.append(v)
 
-        threads = [
-            threading.Thread(target=_set_and_check, args=(v,))
-            for v in [20, 40, 60, 80]
-        ]
+        threads = [threading.Thread(target=_set_and_check, args=(v,)) for v in [20, 40, 60, 80]]
         for t in threads:
             t.start()
         for t in threads:

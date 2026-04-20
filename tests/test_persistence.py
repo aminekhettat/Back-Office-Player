@@ -30,6 +30,7 @@ from infra.persistence import (
 # get_metadata_path
 # ---------------------------------------------------------------------------
 
+
 class TestGetMetadataPath:
     def test_none_input_returns_none(self):
         """get_metadata_path(None) returns None."""
@@ -60,6 +61,7 @@ class TestGetMetadataPath:
 # ---------------------------------------------------------------------------
 # load_segments
 # ---------------------------------------------------------------------------
+
 
 def _build_manager():
     """Helper: manager with two segments."""
@@ -103,9 +105,7 @@ class TestLoadSegments:
         audio = tmp_path / "old.mp3"
         meta = get_metadata_path(audio)
         assert meta is not None
-        old_data = {
-            "segments": [{"name": "x", "start_sec": 0.0, "end_sec": 1.0}]
-        }
+        old_data = {"segments": [{"name": "x", "start_sec": 0.0, "end_sec": 1.0}]}
         meta.write_text(json.dumps(old_data), encoding="utf-8")
         m = load_segments(audio)
         segs = m.list_segments()
@@ -117,6 +117,7 @@ class TestLoadSegments:
 # ---------------------------------------------------------------------------
 # save_segments
 # ---------------------------------------------------------------------------
+
 
 class TestSaveSegments:
     def test_none_path_does_nothing(self):
@@ -153,12 +154,11 @@ class TestSaveSegments:
 # export_segments_text
 # ---------------------------------------------------------------------------
 
+
 def _manager_with_notes():
     """Helper: manager with two segments, one with notes and category."""
     m = SegmentManager()
-    m.add_segment(
-        Segment("Verse", 0.0, 10.0, notes="hard", category="difficult")
-    )
+    m.add_segment(Segment("Verse", 0.0, 10.0, notes="hard", category="difficult"))
     m.add_segment(Segment("Chorus", 10.0, 20.0))
     return m
 
@@ -226,9 +226,7 @@ class TestExportSegmentsText:
     def test_invalid_format_raises_value_error(self, tmp_path, audio_path):
         """export_segments_text raises ValueError for an unknown format."""
         with pytest.raises(ValueError, match="Unknown format"):
-            export_segments_text(
-                audio_path, _manager_with_notes(), tmp_path / "x.xml", fmt="xml"
-            )
+            export_segments_text(audio_path, _manager_with_notes(), tmp_path / "x.xml", fmt="xml")
 
     def test_export_csv_none_audio_path(self, tmp_path):
         """export_segments_text works with None as audio_file_path."""

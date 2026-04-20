@@ -209,4 +209,6 @@ __marimo__/
 # Local BOP specific stuff
 bopenv/
 *.txt
+!requirements.txt
+!requirements-dev.txt
 .claude/

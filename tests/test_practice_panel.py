@@ -20,6 +20,7 @@ from ui.practice_panel import PracticePanel
 # Fixture
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def panel(qtbot):
     """Return a PracticePanel widget."""
@@ -32,6 +33,7 @@ def panel(qtbot):
 # ---------------------------------------------------------------------------
 # Creation
 # ---------------------------------------------------------------------------
+
 
 class TestPracticePanelCreation:
     def test_widget_is_created(self, panel):
@@ -54,6 +56,7 @@ class TestPracticePanelCreation:
 # ---------------------------------------------------------------------------
 # get_session
 # ---------------------------------------------------------------------------
+
 
 class TestGetSession:
     def test_returns_practice_session(self, panel):
@@ -101,6 +104,7 @@ class TestGetSession:
 # start_session
 # ---------------------------------------------------------------------------
 
+
 class TestStartSession:
     def test_start_session_returns_active_session(self, panel):
         """start_session returns an active PracticeSession."""
@@ -125,6 +129,7 @@ class TestStartSession:
 # stop_session
 # ---------------------------------------------------------------------------
 
+
 class TestStopSession:
     def test_stop_session_stops_timer(self, panel):
         """stop_session stops the internal QTimer."""
@@ -144,6 +149,7 @@ class TestStopSession:
 # ---------------------------------------------------------------------------
 # reset_session
 # ---------------------------------------------------------------------------
+
 
 class TestResetSession:
     def test_reset_clears_session(self, panel):
@@ -168,6 +174,7 @@ class TestResetSession:
 # get_active_session
 # ---------------------------------------------------------------------------
 
+
 class TestGetActiveSession:
     def test_returns_none_when_not_started(self, panel):
         """get_active_session returns None before start."""
@@ -190,6 +197,7 @@ class TestGetActiveSession:
 # _tick
 # ---------------------------------------------------------------------------
 
+
 class TestTick:
     def test_tick_without_session_does_not_crash(self, panel):
         """_tick with no session does not raise."""
@@ -211,6 +219,7 @@ class TestTick:
 # ---------------------------------------------------------------------------
 # _on_progressive_changed
 # ---------------------------------------------------------------------------
+
 
 class TestOnProgressiveChanged:
     def test_check_shows_widgets(self, panel, qtbot):

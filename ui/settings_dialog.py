@@ -121,9 +121,7 @@ class SettingsDialog(QDialog):
             current_seq = shortcuts_cfg.get(action_key, "")
             editor = QKeySequenceEdit(QKeySequence(current_seq))
             editor.setAccessibleName(f"{tr('settings_tab_shortcuts')}: {label_text}")
-            editor.setAccessibleDescription(
-                f"{tr('settings_tab_shortcuts')}: {label_text}"
-            )
+            editor.setAccessibleDescription(f"{tr('settings_tab_shortcuts')}: {label_text}")
             self._shortcut_edits[action_key] = editor
             lbl = QLabel(label_text)
             self._shortcut_labels[action_key] = lbl
@@ -138,9 +136,7 @@ class SettingsDialog(QDialog):
 
         # Theme
         self._theme_group = QGroupBox(tr("settings_theme_group"))
-        self._theme_group.setAccessibleName(
-            tr("settings_theme_group_accessible_name")
-        )
+        self._theme_group.setAccessibleName(tr("settings_theme_group_accessible_name"))
         theme_layout = QFormLayout(self._theme_group)
         self.cmb_theme = QComboBox()
         self.cmb_theme.addItems(["default", "dark", "high_contrast"])
@@ -148,51 +144,33 @@ class SettingsDialog(QDialog):
         idx = self.cmb_theme.findText(current_theme)
         if idx >= 0:
             self.cmb_theme.setCurrentIndex(idx)
-        self.cmb_theme.setAccessibleName(
-            tr("settings_theme_combo_accessible_name")
-        )
-        self.cmb_theme.setAccessibleDescription(
-            tr("settings_theme_combo_accessible_desc")
-        )
+        self.cmb_theme.setAccessibleName(tr("settings_theme_combo_accessible_name"))
+        self.cmb_theme.setAccessibleDescription(tr("settings_theme_combo_accessible_desc"))
         self._theme_label = QLabel(tr("settings_theme_label"))
         theme_layout.addRow(self._theme_label, self.cmb_theme)
         layout.addWidget(self._theme_group)
 
         # Position announce interval
         self._announce_group = QGroupBox(tr("settings_accessibility_group"))
-        self._announce_group.setAccessibleName(
-            tr("settings_accessibility_group_accessible_name")
-        )
+        self._announce_group.setAccessibleName(tr("settings_accessibility_group_accessible_name"))
         announce_layout = QFormLayout(self._announce_group)
         self.spn_announce = QSpinBox()
         self.spn_announce.setRange(1, 60)
         self.spn_announce.setSuffix(" s")
-        self.spn_announce.setValue(
-            int(self.settings.get("position_announce_interval", 5))
-        )
-        self.spn_announce.setAccessibleName(
-            tr("settings_announce_spin_accessible_name")
-        )
-        self.spn_announce.setAccessibleDescription(
-            tr("settings_announce_spin_accessible_desc")
-        )
+        self.spn_announce.setValue(int(self.settings.get("position_announce_interval", 5)))
+        self.spn_announce.setAccessibleName(tr("settings_announce_spin_accessible_name"))
+        self.spn_announce.setAccessibleDescription(tr("settings_announce_spin_accessible_desc"))
         self._announce_label = QLabel(tr("settings_announce_label"))
         announce_layout.addRow(self._announce_label, self.spn_announce)
         layout.addWidget(self._announce_group)
 
         # Audio processing
         self._audio_group = QGroupBox(tr("settings_audio_group"))
-        self._audio_group.setAccessibleName(
-            tr("settings_audio_group_accessible_name")
-        )
+        self._audio_group.setAccessibleName(tr("settings_audio_group_accessible_name"))
         audio_layout = QFormLayout(self._audio_group)
         self.chk_pitch_preserving = QCheckBox(tr("settings_pitch_preserving"))
-        self.chk_pitch_preserving.setChecked(
-            bool(self.settings.get("pitch_preserving", False))
-        )
-        self.chk_pitch_preserving.setAccessibleName(
-            tr("settings_pitch_preserving_accessible_name")
-        )
+        self.chk_pitch_preserving.setChecked(bool(self.settings.get("pitch_preserving", False)))
+        self.chk_pitch_preserving.setAccessibleName(tr("settings_pitch_preserving_accessible_name"))
         self.chk_pitch_preserving.setAccessibleDescription(
             tr("settings_pitch_preserving_accessible_desc")
         )
@@ -240,9 +218,7 @@ class SettingsDialog(QDialog):
                 self._shortcut_labels[action_key].setText(label_text)
             if action_key in self._shortcut_edits:
                 editor = self._shortcut_edits[action_key]
-                editor.setAccessibleName(
-                    f"{tr('settings_tab_shortcuts')}: {label_text}"
-                )
+                editor.setAccessibleName(f"{tr('settings_tab_shortcuts')}: {label_text}")
 
         # Appearance tab
         self._theme_group.setTitle(tr("settings_theme_group"))
@@ -252,9 +228,5 @@ class SettingsDialog(QDialog):
         self._audio_group.setTitle(tr("settings_audio_group"))
         self.chk_pitch_preserving.setText(tr("settings_pitch_preserving"))
         self.cmb_theme.setAccessibleName(tr("settings_theme_combo_accessible_name"))
-        self.spn_announce.setAccessibleName(
-            tr("settings_announce_spin_accessible_name")
-        )
-        self.chk_pitch_preserving.setAccessibleName(
-            tr("settings_pitch_preserving_accessible_name")
-        )
+        self.spn_announce.setAccessibleName(tr("settings_announce_spin_accessible_name"))
+        self.chk_pitch_preserving.setAccessibleName(tr("settings_pitch_preserving_accessible_name"))

@@ -29,6 +29,7 @@ from infra.settings import (
 # get_settings_path
 # ---------------------------------------------------------------------------
 
+
 class TestGetSettingsPath:
     def test_returns_path_object(self, settings_path):
         """get_settings_path returns a Path object."""
@@ -71,6 +72,7 @@ class TestGetSettingsPath:
 # ---------------------------------------------------------------------------
 # _deep_merge
 # ---------------------------------------------------------------------------
+
 
 class TestDeepMerge:
     def test_simple_flat_overwrite(self):
@@ -123,6 +125,7 @@ class TestDeepMerge:
 # load_settings / save_settings
 # ---------------------------------------------------------------------------
 
+
 class TestLoadSettings:
     def test_defaults_when_no_file(self, settings_path):
         """load_settings returns defaults when the file does not exist."""
@@ -140,9 +143,7 @@ class TestLoadSettings:
 
     def test_missing_keys_filled_with_defaults(self, settings_path):
         """Loading a partial settings file fills missing keys from defaults."""
-        settings_path.write_text(
-            json.dumps({"default_volume": 55}), encoding="utf-8"
-        )
+        settings_path.write_text(json.dumps({"default_volume": 55}), encoding="utf-8")
         cfg = load_settings()
         assert cfg["default_volume"] == 55
         assert "recent_files" in cfg
@@ -156,9 +157,7 @@ class TestLoadSettings:
 
     def test_shortcuts_merged_not_replaced(self, settings_path):
         """Partial shortcuts dict in file does not wipe unset shortcut keys."""
-        settings_path.write_text(
-            json.dumps({"shortcuts": {"open": "Ctrl+F"}}), encoding="utf-8"
-        )
+        settings_path.write_text(json.dumps({"shortcuts": {"open": "Ctrl+F"}}), encoding="utf-8")
         cfg = load_settings()
         # "open" should be overridden
         assert cfg["shortcuts"]["open"] == "Ctrl+F"
@@ -182,6 +181,7 @@ class TestSaveSettings:
 # ---------------------------------------------------------------------------
 # add_recent_file
 # ---------------------------------------------------------------------------
+
 
 class TestAddRecentFile:
     def test_new_path_prepended(self):

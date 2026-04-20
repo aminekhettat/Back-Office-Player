@@ -128,9 +128,7 @@ class PitchEngine:
 
         def _worker():
             try:
-                result = librosa.effects.pitch_shift(
-                    y=audio, sr=sr, n_steps=semitones
-                )
+                result = librosa.effects.pitch_shift(y=audio, sr=sr, n_steps=semitones)
                 self._set_cached(key, result)
                 on_done(result)
             except Exception as exc:

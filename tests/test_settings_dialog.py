@@ -22,6 +22,7 @@ from ui.settings_dialog import _SHORTCUT_KEY_MAP, SettingsDialog
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def settings_cfg():
     """Return a complete settings dict for dialog initialisation."""
@@ -57,6 +58,7 @@ def dialog(qtbot, settings_cfg):
 # Creation
 # ---------------------------------------------------------------------------
 
+
 class TestSettingsDialogCreation:
     def test_dialog_is_created(self, dialog):
         """SettingsDialog can be instantiated without error."""
@@ -70,6 +72,7 @@ class TestSettingsDialogCreation:
 # ---------------------------------------------------------------------------
 # _build_shortcuts_tab
 # ---------------------------------------------------------------------------
+
 
 class TestShortcutsTab:
     def test_all_shortcut_keys_present(self, dialog):
@@ -94,6 +97,7 @@ class TestShortcutsTab:
 # ---------------------------------------------------------------------------
 # _build_appearance_tab
 # ---------------------------------------------------------------------------
+
 
 class TestAppearanceTab:
     def test_theme_combobox_has_three_items(self, dialog):
@@ -144,6 +148,7 @@ class TestAppearanceTab:
 # _on_accept
 # ---------------------------------------------------------------------------
 
+
 class TestOnAccept:
     def test_accept_writes_theme(self, dialog, settings_cfg):
         """_on_accept stores the selected theme back into settings."""
@@ -178,8 +183,7 @@ class TestOnAccept:
 
     def test_accept_creates_shortcuts_key_if_missing(self, qtbot):
         """_on_accept creates the 'shortcuts' key if it doesn't exist."""
-        cfg = {"theme": "default", "position_announce_interval": 5,
-               "pitch_preserving": False}
+        cfg = {"theme": "default", "position_announce_interval": 5, "pitch_preserving": False}
         dlg = SettingsDialog(cfg)
         qtbot.addWidget(dlg)
         dlg._on_accept()
@@ -189,6 +193,7 @@ class TestOnAccept:
 # ---------------------------------------------------------------------------
 # reject
 # ---------------------------------------------------------------------------
+
 
 class TestReject:
     def test_reject_does_not_modify_settings(self, dialog, settings_cfg):
@@ -200,14 +205,13 @@ class TestReject:
         dialog.reject()
         # Settings must not have changed
         assert settings_cfg["theme"] == original["theme"]
-        assert settings_cfg["position_announce_interval"] == original[
-            "position_announce_interval"
-        ]
+        assert settings_cfg["position_announce_interval"] == original["position_announce_interval"]
 
 
 # ---------------------------------------------------------------------------
 # retranslate_ui
 # ---------------------------------------------------------------------------
+
 
 class TestRetranslateUi:
     def test_retranslate_ui_does_not_crash(self, dialog):

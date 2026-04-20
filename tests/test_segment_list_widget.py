@@ -24,6 +24,7 @@ from ui.segment_list_widget import SegmentListWidget
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
 
+
 def _mgr(*names, **kwargs) -> SegmentManager:
     """Helper: build a SegmentManager from a list of names."""
     m = SegmentManager()
@@ -46,6 +47,7 @@ def widget(qtbot):
 # Creation
 # ---------------------------------------------------------------------------
 
+
 class TestSegmentListWidgetCreation:
     def test_list_populated_on_creation(self, widget):
         """The list is filled with segments on creation."""
@@ -64,6 +66,7 @@ class TestSegmentListWidgetCreation:
 # ---------------------------------------------------------------------------
 # refresh_list
 # ---------------------------------------------------------------------------
+
 
 class TestRefreshList:
     def test_empty_manager_shows_no_items(self, qtbot):
@@ -135,6 +138,7 @@ class TestRefreshList:
 # add_segment
 # ---------------------------------------------------------------------------
 
+
 class TestAddSegment:
     def test_add_segment_increases_count(self, widget):
         """add_segment adds the segment and refreshes the list."""
@@ -151,6 +155,7 @@ class TestAddSegment:
 # set_segment_manager
 # ---------------------------------------------------------------------------
 
+
 class TestSetSegmentManager:
     def test_set_segment_manager_replaces_and_refreshes(self, widget, qtbot):
         """set_segment_manager updates the manager and repaints the list."""
@@ -163,6 +168,7 @@ class TestSetSegmentManager:
 # ---------------------------------------------------------------------------
 # on_segment_selected
 # ---------------------------------------------------------------------------
+
 
 class TestOnSegmentSelected:
     def test_callback_called_when_set(self, widget):
@@ -188,6 +194,7 @@ class TestOnSegmentSelected:
 # on_jump_to_segment
 # ---------------------------------------------------------------------------
 
+
 class TestOnJumpToSegment:
     def test_jump_triggers_callback(self, widget):
         """on_jump_to_segment calls selected_callback for the current item."""
@@ -208,6 +215,7 @@ class TestOnJumpToSegment:
 # on_delete_segment
 # ---------------------------------------------------------------------------
 
+
 class TestOnDeleteSegment:
     def test_delete_no_selection_shows_warning(self, widget, monkeypatch):
         """on_delete_segment shows a warning dialog when nothing is selected."""
@@ -222,18 +230,14 @@ class TestOnDeleteSegment:
 
     def test_delete_selected_removes_item(self, widget, monkeypatch):
         """on_delete_segment removes the selected segment from the list."""
-        monkeypatch.setattr(
-            "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
-        )
+        monkeypatch.setattr("PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None)
         widget.list_widget.setCurrentRow(0)
         widget.on_delete_segment()
         assert widget.list_widget.count() == 2
 
     def test_delete_calls_changed_callback(self, widget, monkeypatch):
         """on_delete_segment fires changed_callback after deletion."""
-        monkeypatch.setattr(
-            "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
-        )
+        monkeypatch.setattr("PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None)
         calls = []
         widget.changed_callback = lambda: calls.append(1)
         widget.list_widget.setCurrentRow(0)
@@ -244,6 +248,7 @@ class TestOnDeleteSegment:
 # ---------------------------------------------------------------------------
 # on_move_up
 # ---------------------------------------------------------------------------
+
 
 class TestOnMoveUp:
     def test_no_selection_does_nothing(self, widget):
@@ -283,6 +288,7 @@ class TestOnMoveUp:
 # on_move_down
 # ---------------------------------------------------------------------------
 
+
 class TestOnMoveDown:
     def test_no_selection_does_nothing(self, widget):
         """on_move_down with no selection does not raise."""
@@ -320,6 +326,7 @@ class TestOnMoveDown:
 # _on_category_filter_changed
 # ---------------------------------------------------------------------------
 
+
 class TestCategoryFilterChanged:
     def test_changing_filter_calls_refresh(self, qtbot):
         """Changing the category combobox triggers refresh_list."""
@@ -337,14 +344,11 @@ class TestCategoryFilterChanged:
 # delete_callback (undo delegation)
 # ---------------------------------------------------------------------------
 
+
 class TestDeleteCallback:
-    def test_delete_callback_called_instead_of_direct_remove(
-        self, widget, monkeypatch
-    ):
+    def test_delete_callback_called_instead_of_direct_remove(self, widget, monkeypatch):
         """When delete_callback is set, it is called instead of directly removing."""
-        monkeypatch.setattr(
-            "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
-        )
+        monkeypatch.setattr("PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None)
         received = []
         widget.delete_callback = lambda name: received.append(name)
         widget.list_widget.setCurrentRow(0)
@@ -355,9 +359,7 @@ class TestDeleteCallback:
 
     def test_delete_callback_not_called_when_none(self, widget, monkeypatch):
         """Without delete_callback, the segment is removed directly."""
-        monkeypatch.setattr(
-            "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
-        )
+        monkeypatch.setattr("PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None)
         widget.delete_callback = None
         widget.list_widget.setCurrentRow(0)
         widget.on_delete_segment()
@@ -367,6 +369,7 @@ class TestDeleteCallback:
 # ---------------------------------------------------------------------------
 # export_wav_callback
 # ---------------------------------------------------------------------------
+
 
 class TestExportWavCallback:
     def test_export_wav_no_selection_shows_warning(self, widget, monkeypatch):
@@ -399,6 +402,7 @@ class TestExportWavCallback:
 # ---------------------------------------------------------------------------
 # export_mp3_callback
 # ---------------------------------------------------------------------------
+
 
 class TestExportMp3Callback:
     def test_export_mp3_no_selection_shows_warning(self, widget, monkeypatch):
@@ -435,6 +439,7 @@ class TestExportMp3Callback:
 # ---------------------------------------------------------------------------
 # retranslate_ui
 # ---------------------------------------------------------------------------
+
 
 class TestRetranslateUi:
     def test_retranslate_ui_does_not_crash(self, widget):

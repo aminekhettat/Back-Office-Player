@@ -34,6 +34,7 @@ _real_start_update_check = MainWindowQt._start_update_check
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
 
+
 def _make_window(qtbot, tmp_path, settings_path, monkeypatch, audio_player=None):
     """Create a MainWindowQt with mocked settings and optional custom player."""
     if audio_player is None:
@@ -93,6 +94,7 @@ def loaded_window(qtbot, tmp_path, settings_path, monkeypatch, sample_audio, sam
 # Window creation
 # ---------------------------------------------------------------------------
 
+
 class TestMainWindowCreation:
     def test_window_title(self, window):
         """Main window has the expected title."""
@@ -133,6 +135,7 @@ class TestMainWindowCreation:
 # ---------------------------------------------------------------------------
 # on_open_file
 # ---------------------------------------------------------------------------
+
 
 class TestOnOpenFile:
     def test_cancelled_dialog_does_not_load(self, window, monkeypatch):
@@ -187,6 +190,7 @@ class TestOnOpenFile:
 # _load_audio_file
 # ---------------------------------------------------------------------------
 
+
 class TestLoadAudioFile:
     def test_load_error_shows_message(self, window, monkeypatch, tmp_path, qtbot):
         """_load_audio_file shows a critical message box on load error."""
@@ -224,6 +228,7 @@ class TestLoadAudioFile:
 # ---------------------------------------------------------------------------
 # Playback controls
 # ---------------------------------------------------------------------------
+
 
 class TestPlaybackControls:
     def test_on_play_calls_player_play(self, window):
@@ -316,6 +321,7 @@ class TestPlaybackControls:
 # Volume / Seek
 # ---------------------------------------------------------------------------
 
+
 class TestVolumeAndSeek:
     def test_on_volume_change(self, window):
         """on_volume_change() calls set_volume on the player."""
@@ -350,6 +356,7 @@ class TestVolumeAndSeek:
 # ---------------------------------------------------------------------------
 # A/B loop controls
 # ---------------------------------------------------------------------------
+
 
 class TestABLoopControls:
     def test_on_set_point_a(self, window):
@@ -401,6 +408,7 @@ class TestABLoopControls:
 # Tempo / Pitch
 # ---------------------------------------------------------------------------
 
+
 class TestTempoPitch:
     def test_on_tempo_change_without_pitch_preserving(self, window):
         """on_tempo_change sets tempo on player (no pitch-preserving)."""
@@ -436,6 +444,7 @@ class TestTempoPitch:
 # ---------------------------------------------------------------------------
 # Segment navigation
 # ---------------------------------------------------------------------------
+
 
 class TestSegmentNavigation:
     def _add_segments(self, w):
@@ -491,6 +500,7 @@ class TestSegmentNavigation:
 # ---------------------------------------------------------------------------
 # Save segment
 # ---------------------------------------------------------------------------
+
 
 class TestSaveSegment:
     def test_save_segment_invalid_ab(self, window, monkeypatch):
@@ -551,6 +561,7 @@ class TestSaveSegment:
 # Export / Import config
 # ---------------------------------------------------------------------------
 
+
 class TestExportImportConfig:
     def test_export_config_cancelled(self, window, monkeypatch):
         """on_export_config does nothing if dialog is cancelled."""
@@ -569,9 +580,7 @@ class TestExportImportConfig:
             "PySide6.QtWidgets.QFileDialog.getSaveFileName",
             lambda *a, **k: (out, "BOP Files"),
         )
-        monkeypatch.setattr(
-            "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
-        )
+        monkeypatch.setattr("PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None)
         w.on_export_config()
         assert Path(out).is_file()
         data = json.loads(Path(out).read_text(encoding="utf-8"))
@@ -601,9 +610,7 @@ class TestExportImportConfig:
             "PySide6.QtWidgets.QFileDialog.getOpenFileName",
             lambda *a, **k: (str(bop_file), "BOP Files"),
         )
-        monkeypatch.setattr(
-            "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
-        )
+        monkeypatch.setattr("PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None)
         w.on_import_config()
         assert w.segment_manager.get_segment("Intro") is not None
 
@@ -611,6 +618,7 @@ class TestExportImportConfig:
 # ---------------------------------------------------------------------------
 # Export segments CSV
 # ---------------------------------------------------------------------------
+
 
 class TestExportSegmentsCsv:
     def test_export_segments_csv_cancelled(self, window, monkeypatch):
@@ -630,9 +638,7 @@ class TestExportSegmentsCsv:
             "PySide6.QtWidgets.QFileDialog.getSaveFileName",
             lambda *a, **k: (out, "CSV Files"),
         )
-        monkeypatch.setattr(
-            "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
-        )
+        monkeypatch.setattr("PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None)
         w.on_export_segments_csv()
         assert Path(out).is_file()
 
@@ -644,9 +650,7 @@ class TestExportSegmentsCsv:
             "PySide6.QtWidgets.QFileDialog.getSaveFileName",
             lambda *a, **k: (out, "Text Files"),
         )
-        monkeypatch.setattr(
-            "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
-        )
+        monkeypatch.setattr("PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None)
         w.on_export_segments_csv()
         assert Path(out).is_file()
 
@@ -654,6 +658,7 @@ class TestExportSegmentsCsv:
 # ---------------------------------------------------------------------------
 # Settings dialog
 # ---------------------------------------------------------------------------
+
 
 class TestOpenSettings:
     def test_on_open_settings_opens_dialog(self, window, monkeypatch):
@@ -670,6 +675,7 @@ class TestOpenSettings:
 # ---------------------------------------------------------------------------
 # _update_position
 # ---------------------------------------------------------------------------
+
 
 class TestUpdatePosition:
     def test_update_position_no_file(self, window):
@@ -718,6 +724,7 @@ class TestUpdatePosition:
 # ---------------------------------------------------------------------------
 # _handle_loop_end
 # ---------------------------------------------------------------------------
+
 
 class TestHandleLoopEnd:
     def test_handle_loop_end_no_session(self, window):
@@ -778,6 +785,7 @@ class TestHandleLoopEnd:
 # _do_loop_jump
 # ---------------------------------------------------------------------------
 
+
 class TestDoLoopJump:
     def test_do_loop_jump_seeks_to_point_a(self, window):
         """_do_loop_jump seeks to point_a and calls play."""
@@ -798,6 +806,7 @@ class TestDoLoopJump:
 # ---------------------------------------------------------------------------
 # _apply_theme
 # ---------------------------------------------------------------------------
+
 
 class TestApplyTheme:
     def test_apply_default_theme(self, window):
@@ -833,6 +842,7 @@ class TestApplyTheme:
 # _save_practice_history
 # ---------------------------------------------------------------------------
 
+
 class TestSavePracticeHistory:
     def test_save_history_zero_loops_is_noop(self, window):
         """_save_practice_history does nothing when no loops occurred."""
@@ -863,6 +873,7 @@ class TestSavePracticeHistory:
 # _check_updates_worker
 # ---------------------------------------------------------------------------
 
+
 class TestCheckUpdatesWorker:
     def test_update_available_sets_status(self, window):
         """_check_updates_worker sets status label when update is available."""
@@ -878,6 +889,7 @@ class TestCheckUpdatesWorker:
     def test_same_version_no_status_update(self, window):
         """_check_updates_worker does nothing when version matches."""
         from ui.main_window import _CURRENT_VERSION
+
         w, _ = window
         resp_data = json.dumps({"tag_name": _CURRENT_VERSION}).encode()
         mock_resp = MagicMock()
@@ -897,6 +909,7 @@ class TestCheckUpdatesWorker:
 # ---------------------------------------------------------------------------
 # _rebuild_recent_menu
 # ---------------------------------------------------------------------------
+
 
 class TestRebuildRecentMenu:
     def test_empty_recent_files_shows_none(self, window):
@@ -920,6 +933,7 @@ class TestRebuildRecentMenu:
 # ---------------------------------------------------------------------------
 # _open_recent
 # ---------------------------------------------------------------------------
+
 
 class TestOpenRecent:
     def test_open_recent_not_found(self, window, monkeypatch):
@@ -948,6 +962,7 @@ class TestOpenRecent:
 # _on_waveform_seek
 # ---------------------------------------------------------------------------
 
+
 class TestWaveformSeek:
     def test_on_waveform_seek_calls_set_position(self, window):
         """_on_waveform_seek forwards the seconds value to the audio player."""
@@ -959,6 +974,7 @@ class TestWaveformSeek:
 # ---------------------------------------------------------------------------
 # _update_position — screen-reader announce edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestUpdatePositionAnnounce:
     def test_announce_interval_zero_skips_announce(self, window):
@@ -988,6 +1004,7 @@ class TestUpdatePositionAnnounce:
 # ---------------------------------------------------------------------------
 # _format_time helper
 # ---------------------------------------------------------------------------
+
 
 class TestFormatTime:
     def test_format_zero(self, window):
@@ -1020,6 +1037,7 @@ class TestFormatTime:
 # _start_update_check
 # ---------------------------------------------------------------------------
 
+
 class TestStartUpdateCheck:
     def test_starts_background_thread(self, window):
         """_start_update_check launches a daemon thread."""
@@ -1043,6 +1061,7 @@ class TestStartUpdateCheck:
 # ---------------------------------------------------------------------------
 # _on_delete_segment_cmd / _on_undo / _on_redo
 # ---------------------------------------------------------------------------
+
 
 class TestUndoRedo:
     def _add_segment(self, w, monkeypatch) -> None:
@@ -1100,9 +1119,11 @@ class TestUndoRedo:
 # _on_export_segment_wav / _on_export_segment_mp3
 # ---------------------------------------------------------------------------
 
+
 class TestExportSegmentAudio:
     def _seg(self):
         from core.segment import Segment
+
         return Segment(name="Chorus", start_sec=0.0, end_sec=1.0)
 
     def test_export_wav_cancelled_is_noop(self, window, monkeypatch):
@@ -1122,9 +1143,7 @@ class TestExportSegmentAudio:
             "PySide6.QtWidgets.QFileDialog.getSaveFileName",
             lambda *a, **k: (out, "WAV Files"),
         )
-        monkeypatch.setattr(
-            "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
-        )
+        monkeypatch.setattr("PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None)
         player.get_audio_snapshot.return_value = (np.zeros(100, dtype=np.float32), 44100)
         with patch("ui.main_window.export_segment_wav"):
             w._on_export_segment_wav(self._seg())
@@ -1163,9 +1182,7 @@ class TestExportSegmentAudio:
             "PySide6.QtWidgets.QFileDialog.getSaveFileName",
             lambda *a, **k: (out, "MP3 Files"),
         )
-        monkeypatch.setattr(
-            "PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None
-        )
+        monkeypatch.setattr("PySide6.QtWidgets.QMessageBox.information", lambda *a, **k: None)
         player.get_audio_snapshot.return_value = (np.zeros(100, dtype=np.float32), 44100)
         with patch("ui.main_window.export_segment_mp3"):
             w._on_export_segment_mp3(self._seg())
@@ -1191,6 +1208,7 @@ class TestExportSegmentAudio:
 # ---------------------------------------------------------------------------
 # _on_open_history / _on_set_language
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryAndLanguage:
     def test_on_open_history_opens_dialog(self, window, monkeypatch):
@@ -1221,6 +1239,7 @@ class TestHistoryAndLanguage:
 # ---------------------------------------------------------------------------
 # _TimeSliderAccessible — text() with formattedTime property
 # ---------------------------------------------------------------------------
+
 
 class TestTimeSliderAccessible:
     def test_text_returns_formatted_time_when_set(self, qtbot):
@@ -1269,8 +1288,45 @@ class TestTimeSliderAccessible:
 
 
 # ---------------------------------------------------------------------------
+# _time_slider_accessible_factory — accessibility interface factory
+# ---------------------------------------------------------------------------
+
+
+class TestTimeSliderAccessibleFactory:
+    def test_factory_returns_accessible_for_time_slider(self, qtbot):
+        """Factory returns a _TimeSliderAccessible for a TimeSlider instance."""
+        from ui.main_window import (
+            TimeSlider,
+            _TimeSliderAccessible,
+            _time_slider_accessible_factory,
+            _time_slider_accessibles,
+        )
+
+        slider = TimeSlider(Qt.Orientation.Horizontal)
+        qtbot.addWidget(slider)
+
+        before = len(_time_slider_accessibles)
+        iface = _time_slider_accessible_factory("QSlider", slider)
+        assert isinstance(iface, _TimeSliderAccessible)
+        # Strong reference is retained to prevent GC by Qt.
+        assert len(_time_slider_accessibles) == before + 1
+
+    def test_factory_returns_none_for_non_time_slider(self, qtbot):
+        """Factory returns None for widgets that are not TimeSlider."""
+        from PySide6.QtWidgets import QPushButton
+
+        from ui.main_window import _time_slider_accessible_factory
+
+        button = QPushButton()
+        qtbot.addWidget(button)
+
+        assert _time_slider_accessible_factory("QPushButton", button) is None
+
+
+# ---------------------------------------------------------------------------
 # _on_about — French and English dialogs
 # ---------------------------------------------------------------------------
+
 
 class TestAboutDialog:
     def test_on_about_english(self, window, monkeypatch):
@@ -1304,6 +1360,7 @@ class TestAboutDialog:
 # _load_audio_file — cancel existing loader thread
 # ---------------------------------------------------------------------------
 
+
 class TestLoadAudioFileCancelsRunning:
     def test_load_cancels_running_loader_thread(self, window, tmp_path):
         """_load_audio_file quits a still-running loader thread (lines 903-904)."""
@@ -1328,6 +1385,7 @@ class TestLoadAudioFileCancelsRunning:
 # ---------------------------------------------------------------------------
 # _on_audio_loaded — pitch-debounce timer when needs_preprocess (line 973)
 # ---------------------------------------------------------------------------
+
 
 class TestOnAudioLoadedPitchDebounce:
     def test_pitch_debounce_started_when_pitch_nonzero(self, window, tmp_path, monkeypatch):
@@ -1359,6 +1417,7 @@ class TestOnAudioLoadedPitchDebounce:
 # ---------------------------------------------------------------------------
 # on_tempo_change — QAccessible.announce branch
 # ---------------------------------------------------------------------------
+
 
 class TestQAccessibleAnnounce:
     def test_tempo_change_calls_announce_when_available(self, window):
@@ -1402,6 +1461,7 @@ class TestQAccessibleAnnounce:
 # on_pitch_change — pitch-preserving starts debounce timer (line 1144)
 # ---------------------------------------------------------------------------
 
+
 class TestPitchChangeWithPreserving:
     def test_pitch_change_with_pitch_preserving_starts_debounce(self, window):
         """on_pitch_change starts the pitch debounce timer when pitch-preserving is on (line 1144)."""
@@ -1420,6 +1480,7 @@ class TestPitchChangeWithPreserving:
 # ---------------------------------------------------------------------------
 # _on_pitch_preserving_toggled — both branches
 # ---------------------------------------------------------------------------
+
 
 class TestPitchPreservingToggled:
     def test_toggled_true_calls_set_pitch_preserving_and_starts_timer(self, window):
@@ -1445,6 +1506,7 @@ class TestPitchPreservingToggled:
 # ---------------------------------------------------------------------------
 # _on_export_segment_wav / _on_export_segment_mp3 — no audio loaded
 # ---------------------------------------------------------------------------
+
 
 class TestExportNoAudio:
     def _seg(self):
@@ -1488,6 +1550,7 @@ class TestExportNoAudio:
 # ---------------------------------------------------------------------------
 # on_export_config / on_import_config / on_export_segments_csv — exception handlers
 # ---------------------------------------------------------------------------
+
 
 class TestExceptionHandlers:
     def test_export_config_exception_shows_critical(self, window, monkeypatch, tmp_path):
@@ -1546,6 +1609,7 @@ class TestExceptionHandlers:
 # _save_practice_history — invalid elapsed string
 # ---------------------------------------------------------------------------
 
+
 class TestSavePracticeHistoryInvalidElapsed:
     def test_invalid_elapsed_defaults_to_zero(self, window, tmp_path):
         """_save_practice_history defaults duration to 0 on parse error (lines 1622-1623)."""
@@ -1573,6 +1637,7 @@ class TestSavePracticeHistoryInvalidElapsed:
 # ---------------------------------------------------------------------------
 # dragEnterEvent / dropEvent
 # ---------------------------------------------------------------------------
+
 
 class TestDragDropEvents:
     def test_drag_enter_audio_file_accepted(self, window):

@@ -28,6 +28,7 @@ from infra.audio_export import export_segment_mp3, export_segment_wav
 # Shared helpers
 # ---------------------------------------------------------------------------
 
+
 def _sine(sr: int = 44100, duration: float = 1.0) -> np.ndarray:
     """Return a 440 Hz sine wave of the requested duration."""
     t = np.arange(int(sr * duration)) / sr
@@ -38,11 +39,12 @@ def _sine(sr: int = 44100, duration: float = 1.0) -> np.ndarray:
 # export_segment_wav
 # ===========================================================================
 
+
 class TestExportSegmentWavErrors:
     def test_none_audio_data_raises_runtime_error(self, tmp_path):
         """RuntimeError when audio_data is None."""
         with pytest.raises(RuntimeError, match="Aucune donnée audio"):
-            export_segment_wav(None, 44100, 0.0, 1.0, tmp_path / "out.wav")  # type: ignore[arg-type]
+            export_segment_wav(None, 44100, 0.0, 1.0, tmp_path / "out.wav")
 
     def test_zero_sample_rate_raises_runtime_error(self, tmp_path):
         """RuntimeError when sample_rate is 0."""
@@ -102,8 +104,8 @@ class TestExportSegmentWavSuccess:
         out = tmp_path / "clipped.wav"
         export_segment_wav(audio, sr, 0.0, len(audio) / sr, out)
         _, data = wav.read(str(out))
-        assert data[0] == 32767    # clipped +1 → 32 767
-        assert data[1] == -32767   # clipped -1 → −32 767
+        assert data[0] == 32767  # clipped +1 → 32 767
+        assert data[1] == -32767  # clipped -1 → −32 767
 
     def test_start_before_zero_is_clamped(self, tmp_path):
         """Negative start_sec is silently clamped to sample 0."""
@@ -127,19 +129,18 @@ class TestExportSegmentWavSuccess:
 # export_segment_mp3
 # ===========================================================================
 
+
 class TestExportSegmentMp3Errors:
     def test_invalid_bitrate_raises_value_error(self, tmp_path):
         """ValueError when bitrate_kbps is not in the accepted set."""
         audio = _sine()
         with pytest.raises(ValueError, match="Débit invalide"):
-            export_segment_mp3(
-                audio, 44100, 0.0, 0.5, tmp_path / "out.mp3", bitrate_kbps=999
-            )
+            export_segment_mp3(audio, 44100, 0.0, 0.5, tmp_path / "out.mp3", bitrate_kbps=999)
 
     def test_none_audio_data_raises_runtime_error(self, tmp_path):
         """RuntimeError when audio_data is None."""
         with pytest.raises(RuntimeError, match="Aucune donnée audio"):
-            export_segment_mp3(None, 44100, 0.0, 1.0, tmp_path / "out.mp3")  # type: ignore[arg-type]
+            export_segment_mp3(None, 44100, 0.0, 1.0, tmp_path / "out.mp3")
 
     def test_zero_sample_rate_raises_runtime_error(self, tmp_path):
         """RuntimeError when sample_rate is 0."""
@@ -268,10 +269,12 @@ class TestExportSegmentMp3Success:
 # _validate_and_slice (direct unit tests for the shared helper)
 # ===========================================================================
 
+
 class TestValidateAndSlice:
     def test_returns_float32_array(self):
         """_validate_and_slice always returns a float32 array."""
         from infra.audio_export import _validate_and_slice
+
         audio = np.zeros(100, dtype=np.float64)  # float64 input
         result = _validate_and_slice(audio, 100, 0.0, 0.5)
         assert result.dtype == np.float32
@@ -279,6 +282,7 @@ class TestValidateAndSlice:
     def test_slice_length_matches_seconds(self):
         """Slice length corresponds to the requested time window."""
         from infra.audio_export import _validate_and_slice
+
         sr = 1000
         audio = np.zeros(sr * 2, dtype=np.float32)
         result = _validate_and_slice(audio, sr, 0.5, 1.0)

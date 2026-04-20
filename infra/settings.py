@@ -117,11 +117,7 @@ def _deep_merge(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
     """
     result = base.copy()
     for key, value in update.items():
-        if (
-            key in result
-            and isinstance(result[key], dict)
-            and isinstance(value, dict)
-        ):
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
             result[key] = _deep_merge(result[key], value)
         else:
             result[key] = value
@@ -168,9 +164,7 @@ def save_settings(settings: dict[str, Any]) -> None:
         _logger.error("Error while saving settings: %s", exc)
 
 
-def add_recent_file(
-    settings: dict[str, Any], path: str, max_files: int = 10
-) -> None:
+def add_recent_file(settings: dict[str, Any], path: str, max_files: int = 10) -> None:
     """
     Prepend *path* to ``settings["recent_files"]``, keeping at most
     *max_files* entries.  Duplicates are removed before inserting.

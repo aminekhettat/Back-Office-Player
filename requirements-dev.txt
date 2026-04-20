@@ -1,0 +1,26 @@
+# Development dependencies — tests, linting, type checking, docs, packaging.
+# Install with: pip install -r requirements.txt -r requirements-dev.txt
+
+# ── Testing ──────────────────────────────────────────────────────────────────
+pytest>=7.0
+pytest-cov>=4.0
+pytest-qt>=4.2
+pytest-subtests>=0.11
+hypothesis>=6.0
+coverage>=7.0
+
+# ── Linting / formatting / type checking ─────────────────────────────────────
+ruff>=0.5
+black>=24.0
+mypy>=1.8
+bandit[toml]>=1.7
+
+# ── Documentation ────────────────────────────────────────────────────────────
+sphinx>=7.0
+
+# ── Audio export (MP3 via lameenc, WAV via soundfile) ────────────────────────
+soundfile>=0.12
+lameenc>=1.7
+
+# ── Versioning ───────────────────────────────────────────────────────────────
+bump2version>=1.0

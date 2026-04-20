@@ -78,7 +78,10 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
     "menu_next_segment": {"fr": "Segment &suivant", "en": "&Next segment"},
     "menu_prev_segment": {"fr": "Segment &précédent", "en": "&Previous segment"},
     "menu_export_bop": {"fr": "&Exporter la configuration (.bop)…", "en": "&Export config (.bop)…"},
-    "menu_import_bop": {"fr": "&Importer une configuration (.bop)…", "en": "&Import config (.bop)…"},
+    "menu_import_bop": {
+        "fr": "&Importer une configuration (.bop)…",
+        "en": "&Import config (.bop)…",
+    },
     "menu_help": {"fr": "&Aide", "en": "&Help"},
     "menu_about": {"fr": "À &propos…", "en": "&About…"},
     "dlg_about_title": {"fr": "À propos de Back-Office Player", "en": "About Back-Office Player"},
@@ -499,10 +502,7 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
             "Filtrer la liste des segments par catégorie. "
             "Sélectionnez « (toutes) » pour afficher tous les segments."
         ),
-        "en": (
-            "Filter the segment list by category. "
-            "Select '(all)' to show all segments."
-        ),
+        "en": ("Filter the segment list by category. " "Select '(all)' to show all segments."),
     },
     "segment_list_all_categories": {"fr": "(toutes)", "en": "(all)"},
     "segment_btn_jump_accessible_name": {
@@ -703,8 +703,7 @@ def set_language(lang: str) -> None:
     global _CURRENT_LANG
     if lang not in _SUPPORTED:
         raise ValueError(
-            f"Langue non supportée : {lang!r}. "
-            f"Valeurs acceptées : {sorted(_SUPPORTED)}"
+            f"Langue non supportée : {lang!r}. " f"Valeurs acceptées : {sorted(_SUPPORTED)}"
         )
     _CURRENT_LANG = lang
 

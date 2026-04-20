@@ -24,6 +24,7 @@ from ui.history_dialog import HistoryDialog, _fmt_duration
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_entry(
     timestamp: str = "2025-01-01T10:00:00",
     audio_file: str = "/music/song.mp3",
@@ -59,6 +60,7 @@ def populated_history(tmp_path) -> PracticeHistory:
 # _fmt_duration helper
 # ---------------------------------------------------------------------------
 
+
 class TestFmtDuration:
     def test_zero(self):
         assert _fmt_duration(0) == "00:00"
@@ -79,6 +81,7 @@ class TestFmtDuration:
 # ---------------------------------------------------------------------------
 # Dialog creation
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryDialogCreation:
     def test_dialog_created_empty_history(self, qtbot, empty_history):
@@ -116,6 +119,7 @@ class TestHistoryDialogCreation:
 # ---------------------------------------------------------------------------
 # _populate — specific cell values
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryDialogPopulate:
     def test_audio_file_shows_basename_only(self, qtbot, populated_history):
@@ -174,6 +178,7 @@ class TestHistoryDialogPopulate:
 # _on_export_csv
 # ---------------------------------------------------------------------------
 
+
 class TestHistoryDialogExport:
     def test_export_cancelled_does_nothing(self, qtbot, populated_history, monkeypatch):
         """Cancelling the file dialog does not call export_csv."""
@@ -204,9 +209,7 @@ class TestHistoryDialogExport:
         dlg._on_export_csv()
         assert len(shown) == 1
 
-    def test_export_exception_shows_critical(
-        self, qtbot, tmp_path, populated_history, monkeypatch
-    ):
+    def test_export_exception_shows_critical(self, qtbot, tmp_path, populated_history, monkeypatch):
         """An exception during export shows a critical error dialog."""
         out = str(tmp_path / "export.csv")
         monkeypatch.setattr(
@@ -232,6 +235,7 @@ class TestHistoryDialogExport:
 # ---------------------------------------------------------------------------
 # retranslate_ui
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryDialogRetranslate:
     def test_retranslate_ui_does_not_crash(self, qtbot, populated_history):

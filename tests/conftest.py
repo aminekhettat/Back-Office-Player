@@ -32,6 +32,7 @@ from infra.i18n import get_language, set_language
 # Language isolation — force English so status-text assertions are stable
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(autouse=True)
 def _force_english(monkeypatch):
     """Force English language for every test; restore the original on teardown."""
@@ -45,6 +46,7 @@ def _force_english(monkeypatch):
 # Settings path isolation
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def settings_path(tmp_path, monkeypatch):
     """
@@ -55,6 +57,7 @@ def settings_path(tmp_path, monkeypatch):
     """
     path = tmp_path / "settings.json"
     import infra.settings as _settings_mod
+
     monkeypatch.setattr(_settings_mod, "get_settings_path", lambda: path)
     return path
 
@@ -69,6 +72,7 @@ def tmp_settings_dir(settings_path):
 # ---------------------------------------------------------------------------
 # Common audio fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def sample_rate() -> int:
@@ -95,6 +99,7 @@ def audio_path(tmp_path: Path) -> Path:
 # Common domain-object fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def basic_segment():
     """Return a simple Segment for use in tests."""
@@ -113,6 +118,7 @@ def segment_manager_with_two():
 # ---------------------------------------------------------------------------
 # Mock AudioPlayer (for UI tests that must not touch sounddevice/librosa)
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def mock_audio_player():

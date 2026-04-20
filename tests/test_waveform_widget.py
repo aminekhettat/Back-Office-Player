@@ -24,6 +24,7 @@ from ui.waveform_widget import WaveformWidget
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def widget(qtbot):
     """Return a WaveformWidget with a known size."""
@@ -48,6 +49,7 @@ def loaded_widget(qtbot, sample_audio, sample_rate):
 # ---------------------------------------------------------------------------
 # Creation
 # ---------------------------------------------------------------------------
+
 
 class TestWaveformWidgetCreation:
     def test_initial_audio_is_none(self, widget):
@@ -79,6 +81,7 @@ class TestWaveformWidgetCreation:
 # set_audio_data
 # ---------------------------------------------------------------------------
 
+
 class TestSetAudioData:
     def test_set_audio_updates_duration(self, widget, sample_audio, sample_rate):
         """set_audio_data correctly computes duration from samples/sr."""
@@ -108,6 +111,7 @@ class TestSetAudioData:
 # set_position
 # ---------------------------------------------------------------------------
 
+
 class TestSetPosition:
     def test_set_position_stores_value(self, loaded_widget):
         """set_position updates the internal position attribute."""
@@ -118,6 +122,7 @@ class TestSetPosition:
 # ---------------------------------------------------------------------------
 # set_point_a / set_point_b
 # ---------------------------------------------------------------------------
+
 
 class TestSetPoints:
     def test_set_point_a(self, loaded_widget):
@@ -147,6 +152,7 @@ class TestSetPoints:
 # set_segments
 # ---------------------------------------------------------------------------
 
+
 class TestSetSegments:
     def test_set_segments_stores_list(self, loaded_widget):
         """set_segments stores a copy of the provided list."""
@@ -165,6 +171,7 @@ class TestSetSegments:
 # ---------------------------------------------------------------------------
 # clear
 # ---------------------------------------------------------------------------
+
 
 class TestClear:
     def test_clear_resets_all_state(self, loaded_widget, sample_audio, sample_rate):
@@ -187,6 +194,7 @@ class TestClear:
 # ---------------------------------------------------------------------------
 # mousePressEvent
 # ---------------------------------------------------------------------------
+
 
 class TestMousePressEvent:
     def test_left_click_emits_seek_requested(self, loaded_widget, qtbot):
@@ -220,6 +228,7 @@ class TestMousePressEvent:
 # paintEvent
 # ---------------------------------------------------------------------------
 
+
 class TestPaintEvent:
     def test_paint_without_audio_does_not_crash(self, widget, qtbot):
         """paintEvent runs without error when no audio is loaded."""
@@ -244,6 +253,7 @@ class TestPaintEvent:
 # resizeEvent
 # ---------------------------------------------------------------------------
 
+
 class TestResizeEvent:
     def test_resize_recomputes_envelope(self, loaded_widget, qtbot):
         """Resizing the widget triggers _compute_envelope."""
@@ -260,6 +270,7 @@ class TestResizeEvent:
 # ---------------------------------------------------------------------------
 # _compute_envelope
 # ---------------------------------------------------------------------------
+
 
 class TestComputeEnvelope:
     def test_empty_audio_gives_none_envelope(self, widget):
